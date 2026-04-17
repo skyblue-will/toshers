@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "description": "Cross-reference graph of named people, institutions, and places in the Mayhew extract. Edges go from a canonical character file (kind: 'character') to someone/something mentioned within that testimony (kind: 'mentioned', 'institution', 'location'). Use for relationship visualisations, dramatis personae, or NPC scaffolding.",
+  "edges": [
+    {
+      "id": "tosher-mentor",
+      "from": { "kind": "character", "id": "06-cuckolds-point-tosher", "label": "The Cuckold's Point tosher" },
+      "to": { "kind": "mentioned", "label": "The old un (his rescuer and mentor)" },
+      "type": "mentor",
+      "description": "The shore-worker who pulled the tosher out of the Cuckold's Point mud as a child, later re-found him after he ran from his blacksmith apprenticeship, equipped him with bag and hoe-pole, and taught him the shore and sewers.",
+      "source_lines": [1728, 1741]
+    },
+    {
+      "id": "tosher-long-jack",
+      "from": { "kind": "character", "id": "06-cuckolds-point-tosher", "label": "The Cuckold's Point tosher" },
+      "to": { "kind": "mentioned", "label": "Long J——" },
+      "type": "partner-turned-rival",
+      "description": "Worked the Parliament Houses fire rubbish in Hyde Park with him in 1834–35 — £3+ each per day. They quarrelled over the whacking (split), the fight ended their access, and the remaining rubbish was buried.",
+      "source_lines": [1826, 1840]
+    },
+    {
+      "id": "tosher-cohort-nicknames",
+      "from": { "kind": "character", "id": "06-cuckolds-point-tosher", "label": "The Cuckold's Point tosher" },
+      "to": { "kind": "mentioned", "label": "Lanky Bill, Long Tom, One-eyed George, Short-armed Jack" },
+      "type": "cohort",
+      "description": "Other shore-workers named in the Mayhew framing at the start of the tosher's chapter — nicknames they are \"known to every one\" by.",
+      "source_lines": [1714, 1721]
+    },
+    {
+      "id": "tosher-rat-bitten-mate",
+      "from": { "kind": "character", "id": "06-cuckolds-point-tosher", "label": "The Cuckold's Point tosher" },
+      "to": { "kind": "mentioned", "label": "The rat-bitten shore-worker" },
+      "type": "cohort",
+      "description": "\"A chap as the rats tackled in the sewers; they bit him hawfully... him as the watermen went in arter when they heard him a shouting as they was a rowin' by.\"",
+      "source_lines": [1792, 1800]
+    },
+    {
+      "id": "tosher-eaten-predecessor",
+      "from": { "kind": "character", "id": "06-cuckolds-point-tosher", "label": "The Cuckold's Point tosher" },
+      "to": { "kind": "mentioned", "label": "The sewer-worker eaten by rats (~1839)" },
+      "type": "predecessor",
+      "description": "\"The man as was found in the sewers about twelve year ago — the rats eat every bit of him, and left nothink but his bones.\" Twelve years before 1851 places this around 1839.",
+      "source_lines": [1801, 1806]
+    },
+    {
+      "id": "tosher-petticoat-lane-jew",
+      "from": { "kind": "character", "id": "06-cuckolds-point-tosher", "label": "The Cuckold's Point tosher" },
+      "to": { "kind": "mentioned", "label": "The Petticoat-lane Jew fence" },
+      "type": "fence",
+      "description": "Buying contact — gave him £7 10s for the metal-plated bracelets from the Hyde Park rubbish, and £1 5s for the gold chain from Bishop Bonner's Fields.",
+      "source_lines": [1835, 1849]
+    },
+    {
+      "id": "jc-gang-captain-c",
+      "from": { "kind": "character", "id": "09-jc-coalwhipper-son-mud-lark", "label": "J.C., the 14-year-old mud-lark" },
+      "to": { "kind": "mentioned", "label": "C——, the 18-year-old gang captain" },
+      "type": "gang-captain",
+      "description": "The Old Gravel-lane mud-lark gang captain J.C. ran with before his rescue. In prison at time of Mayhew's interview — caught stealing bacon.",
+      "source_lines": [2160, 2175]
+    },
+    {
+      "id": "jc-gang-mates",
+      "from": { "kind": "character", "id": "09-jc-coalwhipper-son-mud-lark", "label": "J.C., the 14-year-old mud-lark" },
+      "to": { "kind": "mentioned", "label": "B—— B——, B—— L——, W—— B——, Tim" },
+      "type": "cohort",
+      "description": "Gang mates named by J.C. at the Wapping Ragged School interview.",
+      "source_lines": [2160, 2180]
+    },
+    {
+      "id": "jc-bradbury-evans",
+      "from": { "kind": "character", "id": "09-jc-coalwhipper-son-mud-lark", "label": "J.C., the 14-year-old mud-lark" },
+      "to": { "kind": "institution", "label": "Bradbury & Evans, Whitefriars" },
+      "type": "employer-after-rescue",
+      "description": "The printing firm (Punch, most of Dickens) where J.C. was placed as an apprentice after his Ragged School rescue — the redemption arc's outcome.",
+      "source_lines": [2180, 2195]
+    },
+    {
+      "id": "widow-mr-brown",
+      "from": { "kind": "character", "id": "03-pure-finder-widow", "label": "The pure-finder widow" },
+      "to": { "kind": "mentioned", "label": "Mr Brown, the missing-heir lodger" },
+      "type": "tenant",
+      "description": "The missing-heir pure-finder whose story the widow tells — lodged in Blue Anchor Yard, Bermondsey. Real name never disclosed.",
+      "source_lines": [870, 920]
+    },
+    {
+      "id": "widow-neptune-husband",
+      "from": { "kind": "character", "id": "03-pure-finder-widow", "label": "The pure-finder widow" },
+      "to": { "kind": "institution", "label": "Neptune East Indiaman, bound for Bombay" },
+      "type": "husband-lost-at-sea",
+      "description": "Her first husband's ship — drowned, the origin of her downward slide into pure-finding.",
+      "source_lines": [800, 830]
+    },
+    {
+      "id": "dustman-sall",
+      "from": { "kind": "character", "id": "10-dustman-and-sall", "label": "The East-end dustman" },
+      "to": { "kind": "mentioned", "label": "Sall, his common-law partner" },
+      "type": "partner",
+      "description": "Sall — deaf sifter, out-shovels her partner. Only woman named outright in the extract.",
+      "source_lines": [3870, 3920]
+    },
+    {
+      "id": "dustman-scratchey-jack",
+      "from": { "kind": "character", "id": "10-dustman-and-sall", "label": "The East-end dustman" },
+      "to": { "kind": "mentioned", "label": "Scratchey Jack" },
+      "type": "workmate",
+      "description": "\"The only one in the yard as can read\" — named as the literate dustman by the narrator.",
+      "source_lines": [3870, 3920]
+    },
+    {
+      "id": "liverpool-mckenzie-brassy",
+      "from": { "kind": "character", "id": "01-liverpool-bone-grubber", "label": "The Liverpool-Irish bone-grubber" },
+      "to": { "kind": "institution", "label": "McKenzie & Brassy (Paris & Rouen Railway contractors)" },
+      "type": "former-employer",
+      "description": "Real Victorian railway contractors — the Liverpool-Irish grubber's Paris and Rouen Railway job, from which he was cheated out of £12 savings.",
+      "source_lines": [455, 480]
+    },
+    {
+      "id": "dredger-church-hole-corpse",
+      "from": { "kind": "character", "id": "05-rotherhithe-dredger", "label": "The Rotherhithe dredger" },
+      "to": { "kind": "mentioned", "label": "The Church Hole corpse" },
+      "type": "trauma-scar",
+      "description": "Source of the scar on his hand — the corpse snagged on his drag-chain at Church Hole. Dredgers were paid a parish reward per body recovered.",
+      "source_lines": [1300, 1360]
+    },
+    {
+      "id": "dredger-bill-s",
+      "from": { "kind": "character", "id": "05-rotherhithe-dredger", "label": "The Rotherhithe dredger" },
+      "to": { "kind": "mentioned", "label": "Bill S——, the literate dredger" },
+      "type": "cohort",
+      "description": "The rare literate dredger named in the chapter 06 narration — an anomaly in an otherwise illiterate trade.",
+      "source_lines": [1180, 1200]
+    }
+  ]
+}

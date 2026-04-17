@@ -61,28 +61,40 @@ export default function Home() {
         <h3>3. Edit your settings file by hand</h3>
         <p>Add the <code>mcpServers</code> block above to <code>~/.claude/settings.json</code> (user-scoped) or <code>.claude/settings.json</code> (project-scoped, gitignored if you don&rsquo;t want to share).</p>
 
-        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains eight tools:</p>
+        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains thirteen tools:</p>
         <div className="endpoint-grid">
-          <div className="endpoint"><span className="method">tool</span><span className="path">get_index</span><span className="desc">Master catalogue — call first to orient</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">get_index</span><span className="desc">Master catalogue — call first to orient. Returns version + git commit for cache invalidation</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_chapters</span><span className="desc">Lightweight chapter metadata only</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_chapter(id)</span><span className="desc">Full chapter file by id</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_characters</span><span className="desc">Lightweight testimony metadata only</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_character(id)</span><span className="desc">Full first-person testimony by id</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">search(query, limit?, context?)</span><span className="desc">Exact-match substring search with line citations</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">semantic_search(query, limit?, kind?)</span><span className="desc">Meaning-based search via embeddings — finds concepts Mayhew describes without naming</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">list_glossary</span><span className="desc">Canonical Victorian slang — tosh, pure, brieze, chiffoniers, etc.</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">get_glossary_term(term)</span><span className="desc">One glossary entry with chapter and line citations</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">list_locations</span><span className="desc">London geography with lat/lng coords for map-pinning</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">list_relationships</span><span className="desc">Cross-reference graph — character edges to mentioned people and institutions</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">voice_profile(id)</span><span className="desc">TTS/voice-casting profile per character — dialect level, accent hint, speech notes</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">normalize_price(pounds, shillings, pence)</span><span className="desc">Pre-decimal £/s/d → decimal → modern GBP via BoE CPI 1851→2024</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_source_lines(start, end)</span><span className="desc">Verbatim slice from source.txt for citation-backed quoting</span></div>
         </div>
       </section>
 
       <section>
         <h2><span className="num">§ III.</span>For everyone else (REST)</h2>
-        <p>Plain HTTP, no auth, public-domain source:</p>
+        <p>Plain HTTP, no auth, public-domain source. <strong>CORS is wide-open</strong> (<code>Access-Control-Allow-Origin: *</code>) — browser apps can fetch directly.</p>
         <div className="endpoint-grid">
-          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/index">/api/index</a></span><span className="desc">Master catalogue (chapters + characters + line counts + index files)</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/index">/api/index</a></span><span className="desc">Master catalogue (chapters + characters + line counts + indexes). Returns <code>version</code> and git <code>commit</code> so downstream caches know when to invalidate</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/chapters">/api/chapters</a></span><span className="desc">List all chapters with metadata</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path">/api/chapters/{`{id}`}</span><span className="desc">One chapter (append <code>?format=raw</code> for raw markdown)</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/characters">/api/characters</a></span><span className="desc">List all character testimonies with metadata</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path">/api/characters/{`{id}`}</span><span className="desc">One testimony (append <code>?format=raw</code> for raw markdown)</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/characters/06-cuckolds-point-tosher/voice">/api/characters/{`{id}`}/voice</a></span><span className="desc">Voice-casting / TTS profile — gender, age band, dialect level, accent hint, speech notes</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/glossary">/api/glossary</a></span><span className="desc">Victorian slang glossary with chapter and line citations</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/glossary/tosh">/api/glossary/{`{term}`}</a></span><span className="desc">One glossary entry</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/locations">/api/locations</a></span><span className="desc">Structured London geography with modern lat/lng coords, chapter and character refs</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/relationships">/api/relationships</a></span><span className="desc">Cross-reference graph — character edges to mentioned people and institutions</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/prices/normalize?pounds=3&shillings=5">/api/prices/normalize?pounds={`{n}`}&amp;shillings={`{n}`}&amp;pence={`{n}`}</a></span><span className="desc">Pre-decimal £/s/d → decimal pounds → modern GBP via BoE CPI 1851→2024</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search?q=rats">/api/search?q={`{query}`}&amp;limit={`{n}`}</a></span><span className="desc">Exact-match substring search; returns line numbers, snippets, and surrounding context</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search/semantic?q=physical+disability&limit=3">/api/search/semantic?q={`{query}`}&amp;limit={`{n}`}&amp;kind={`{source|chapter|character}`}</a></span><span className="desc">Meaning-based search via embeddings; returns ranked hits with citations (try it — finds passages by concept even when Mayhew never uses the modern word)</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/source?start=1722&end=1740">/api/source?start={`{n}`}&amp;end={`{m}`}</a></span><span className="desc">Verbatim line range (capped 500 lines; <code>?format=raw</code> for plain text)</span></div>

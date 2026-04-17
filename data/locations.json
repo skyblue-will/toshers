@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "description": "Structured geography of the Mayhew extract. Coords are modern WGS84 (lat, lng) approximations of 1851 locations — use them to place map pins but cite source.txt for any historical claim. chapter_refs and character_refs point to the canonical /api/chapters and /api/characters ids.",
+  "entries": [
+    {
+      "id": "cuckolds-point",
+      "name": "Cuckold's Point",
+      "coords": [51.5017, -0.0427],
+      "era": "1851",
+      "description": "Bend on the Rotherhithe side of the Thames, eastern anchor of the tosher's working shore. Where the shore-worker's first memory is — sinking in mud up to his knees until rescued. Named for a medieval stake-and-horns marker said to indicate Edward II's gift of cuckoldry-shaming rights to the miller.",
+      "chapter_refs": ["07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "source_lines": [1725, 1741]
+    },
+    {
+      "id": "blackfriars-bridge",
+      "name": "Blackfriars Bridge (city sewer mouth)",
+      "coords": [51.5106, -0.1035],
+      "era": "1851",
+      "description": "The city sewer outlet the toshers worked until it was boarded up. Trespass penalty by the tosher's time was fourteen days: \"if you was caught up it and brought afore the Lord Mayor, he'd give you fourteen days on it.\"",
+      "chapter_refs": ["07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "source_lines": [1766, 1776]
+    },
+    {
+      "id": "bishop-bonners-fields",
+      "name": "Bishop Bonner's Fields",
+      "coords": [51.5352, -0.0395],
+      "era": "1851",
+      "description": "Open ground in Bethnal Green where fifty-year-old cellar rubbish was shot in two loads — the tosher worked both alone and made £3 5s, finding a gold chain he first took for copper. Named for Edmund Bonner, the Marian Bishop of London.",
+      "chapter_refs": ["07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "source_lines": [1842, 1852]
+    },
+    {
+      "id": "hyde-park-fire-rubbish",
+      "name": "Hyde Park (Parliament Houses fire rubbish, 1834)",
+      "coords": [51.5073, -0.1657],
+      "era": "1834–1835",
+      "description": "After the Parliament Houses burned on 16 October 1834 the rubbish was shot in Hyde Park. The Cuckold's Point tosher and his mate Long J—— worked it for months, making £3+ each per day: sovereigns, half-sovereigns, silver half-melted, jewellery, rings, stones, brooches. Their quarrel over the split ended their access and the remaining rubbish was buried.",
+      "chapter_refs": ["07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "source_lines": [1825, 1842]
+    },
+    {
+      "id": "petticoat-lane",
+      "name": "Petticoat Lane (Middlesex Street) & Rag Fair",
+      "coords": [51.5179, -0.0756],
+      "era": "1851",
+      "description": "Headquarters of the bone-grubbers and a market for toshers' stolen or salvaged metals. The Petticoat-lane Jew fence paid £7 10s for bracelets the tosher first took to a jeweller who tested them as only plated. Heart of the East-end rag-and-old-clothes trade.",
+      "chapter_refs": ["02-bone-grubbers-and-rag-gatherers", "07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "source_lines": [345, 348]
+    },
+    {
+      "id": "bermondsey-tanyards",
+      "name": "Bermondsey Tanyards",
+      "coords": [51.4962, -0.0721],
+      "era": "1851",
+      "description": "Cluster of London tanyards south of the Thames — the pure-finders' only market. Named yards in Mayhew: Leomont & Roberts, Bavingtons, Beech, Murrell, Cheeseman, Powell, Jones, Jourdans, Kent, Moorcroft, Davis. The alkaline ammonia in 'pure' (dogs' dung) was used to finish morocco and kid leather.",
+      "chapter_refs": ["03-pure-finders", "10-dustmen-of-london"],
+      "character_refs": ["03-pure-finder-widow", "04-manchester-clerk-pure-collector"],
+      "source_lines": [649, 681]
+    },
+    {
+      "id": "st-katherines-docks",
+      "name": "St Katharine Docks / Rosemary Lane district",
+      "coords": [51.5072, -0.0719],
+      "era": "1851",
+      "description": "The \"wretched locality\" between the London and St Katharine's Docks and Rosemary Lane — tumbled houses, dust-heaps, ragged children, headquarters of the bone-grubbers.",
+      "chapter_refs": ["02-bone-grubbers-and-rag-gatherers"],
+      "character_refs": ["01-liverpool-bone-grubber"],
+      "source_lines": [415, 418]
+    },
+    {
+      "id": "ratcliffe-highway",
+      "name": "Ratcliffe Highway",
+      "coords": [51.5082, -0.0575],
+      "era": "1851",
+      "description": "Eastern dockland high-street — beat of the destitute Irish cigar-end finders. Also J.C.'s school neighbourhood: Red Lion School at Green-bank, near Old Gravel-lane.",
+      "chapter_refs": ["04-cigar-end-finders", "08-mud-larks"],
+      "character_refs": ["09-jc-coalwhipper-son-mud-lark"],
+      "source_lines": [973, 973]
+    },
+    {
+      "id": "wapping-ragged-school",
+      "name": "Ragged School, High Street, Wapping",
+      "coords": [51.5045, -0.0556],
+      "era": "1851",
+      "description": "J.C.'s gang headquarters — the Ragged School at Wapping where the 14-year-old mud-lark was rescued from the Old Gravel-lane gang (C—— the 18-year-old captain, B—— B——, B—— L——, W—— B——, Tim) and placed as an apprentice at Bradbury & Evans.",
+      "chapter_refs": ["08-mud-larks"],
+      "character_refs": ["09-jc-coalwhipper-son-mud-lark"],
+      "source_lines": [2180, 2190]
+    },
+    {
+      "id": "king-james-stairs",
+      "name": "King James's Stairs, Wapping Wall",
+      "coords": [51.5048, -0.0455],
+      "era": "1851",
+      "description": "Central Thames access point for the mud-larks of Shadwell and Wapping — where Mayhew watched them on the foreshore at low tide.",
+      "chapter_refs": ["08-mud-larks"],
+      "character_refs": ["07-nine-year-old-mud-lark", "08-seven-year-old-mud-lark"],
+      "source_lines": [2072, 2075]
+    },
+    {
+      "id": "whitechapel-workhouse-hospital",
+      "name": "Whitechapel Workhouse Hospital",
+      "coords": [51.5182, -0.0625],
+      "era": "1851",
+      "description": "Where the Liverpool-Irish bone-grubber spent nine weeks one winter, sick and destitute after his railway-savings fraud.",
+      "chapter_refs": ["02-bone-grubbers-and-rag-gatherers"],
+      "character_refs": ["01-liverpool-bone-grubber"],
+      "source_lines": [526, 526]
+    },
+    {
+      "id": "thames-foreshore-shadwell-wapping",
+      "name": "Thames foreshore — Shadwell & Wapping side",
+      "coords": [51.5040, -0.0580],
+      "era": "1851",
+      "description": "The barefoot-mud-larks' working shore. Coal, copper nails, rope, bones gathered at low tide. Shared with the shore-men (toshers) who take the sewer outlets here too.",
+      "chapter_refs": ["06-dredgers-river-finders", "07-sewer-hunters-toshers", "08-mud-larks"],
+      "character_refs": ["05-rotherhithe-dredger", "07-nine-year-old-mud-lark", "08-seven-year-old-mud-lark"],
+      "source_lines": [1428, 1430]
+    }
+  ]
+}

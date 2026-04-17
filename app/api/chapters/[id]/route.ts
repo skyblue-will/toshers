@@ -28,8 +28,15 @@ export async function GET(
     });
   }
 
+  const meta = chapter.meta as Record<string, unknown>;
   return NextResponse.json(
-    { id, meta: chapter.meta, body: chapter.body },
+    {
+      id,
+      url: `/api/chapters/${id}`,
+      source_lines: meta.source_lines ? String(meta.source_lines) : null,
+      meta,
+      body: chapter.body,
+    },
     { headers: { "cache-control": "public, max-age=300, s-maxage=3600" } },
   );
 }

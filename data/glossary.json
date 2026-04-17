@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "description": "Canonical glossary of Victorian street-trade slang from the Mayhew 1851 extract. Every entry cites the source.txt line(s) where the term is introduced or defined. Pull full context via /api/source?start=&end=.",
+  "entries": [
+    {
+      "term": "tosh",
+      "pos": "noun",
+      "definition": "The copper (and other metal) scrap scavenged from the Thames sewers by sewer-hunters. More generally, anything of value pulled from the underground. Mayhew: \"a word more particularly applied by them to anything made of copper.\"",
+      "chapter_ref": "07-sewer-hunters-toshers",
+      "source_lines": [1471, 1475],
+      "etymology": "Origin disputed; likely cant term tied to the trade itself — the hunters are \"toshers\" because what they bring up is \"tosh.\""
+    },
+    {
+      "term": "toshers",
+      "pos": "noun (plural)",
+      "definition": "Sewer-hunters. Men who work the Thames-side sewer outlets at low tide in long greasy velveteen coats, with eight-foot iron-hooked poles, hunting for copper, iron, rope, bone, and coin. Also call themselves shore-men or shore-workers.",
+      "chapter_ref": "07-sewer-hunters-toshers",
+      "source_lines": [1471, 1479],
+      "etymology": "From 'tosh' — what they find."
+    },
+    {
+      "term": "pure",
+      "pos": "noun",
+      "definition": "Dogs' dung, collected from London streets and sold to Bermondsey tanyards for use in dressing leather (the alkaline ammonia in canine faeces was used to purify the grain of morocco and kid).",
+      "chapter_ref": "03-pure-finders",
+      "source_lines": [16, 16],
+      "etymology": "Ironic trade-term — what the tanners 'purify' the leather with. Mayhew parenthesises it as \"(or dogs'-dung)\" when first introduced at line 16."
+    },
+    {
+      "term": "bunters",
+      "pos": "noun (plural)",
+      "definition": "Older female rag-gatherers who added the collecting of 'pure' to their original trade. Mayhew notes the term \"signifies properly gatherers of rags.\"",
+      "chapter_ref": "03-pure-finders",
+      "source_lines": [640, 642],
+      "etymology": "Cant word for low-class women, esp. rag-pickers."
+    },
+    {
+      "term": "straw-yards",
+      "pos": "noun (plural)",
+      "definition": "Winter night-asylums for the destitute — sheds and barns strewn with straw, opened in the cold months to house those who would otherwise sleep in the street. Close around the beginning of April.",
+      "chapter_ref": "02-bone-grubbers-and-rag-gatherers",
+      "source_lines": [283, 292],
+      "etymology": "Literal — yards floored with straw for sleeping on."
+    },
+    {
+      "term": "trampers",
+      "pos": "noun (plural)",
+      "definition": "Seasonal country labourers who winter in London as street-finders, returning to the country in April to work the harvest.",
+      "chapter_ref": "02-bone-grubbers-and-rag-gatherers",
+      "source_lines": [277, 292],
+      "etymology": "From 'to tramp' — the casual walking-labour they do between cities and seasons."
+    },
+    {
+      "term": "shore-men",
+      "pos": "noun (plural)",
+      "definition": "The sewer-hunters' self-designation — they prefer it to 'toshers'. Also 'shore-workers'. Named for the Thames foreshore where they enter the sewer outlets at low tide.",
+      "chapter_ref": "07-sewer-hunters-toshers",
+      "source_lines": [1464, 1468],
+      "etymology": "Literal — 'shore' as in the Thames foreshore."
+    },
+    {
+      "term": "small master",
+      "pos": "noun phrase",
+      "definition": "A self-employed dredgerman (or, in the dust trade, a small-scale contractor) — working on his own account rather than for a larger licensed trader.",
+      "chapter_ref": "06-dredgers-river-finders",
+      "source_lines": [130, 130],
+      "etymology": "Contrast to the licensed London 'Masters' of the trade."
+    },
+    {
+      "term": "brieze",
+      "pos": "noun",
+      "definition": "The coarser portion of sifted house-dust (as opposed to 'soil', the fine portion). Sold to brick-makers for firing bricks — the buried cinders in the dust ignite when the brick is baked.",
+      "chapter_ref": "10-dustmen-of-london",
+      "source_lines": [3403, 3405],
+      "etymology": "Variant spelling of 'breeze' — cinder/ash residue; same root as the wind."
+    },
+    {
+      "term": "running dustmen",
+      "pos": "noun phrase",
+      "definition": "Unlicensed dust collectors — 'small men' who operate outside the contracted London parish system, usually collecting door-to-door for small cash payments.",
+      "chapter_ref": "10-dustmen-of-london",
+      "source_lines": [4293, 4293],
+      "etymology": "Literal — they 'run' the rounds rather than holding a licensed pitch."
+    },
+    {
+      "term": "chiffoniers",
+      "pos": "noun (plural, French)",
+      "definition": "The Paris equivalent of London bone-grubbers and rag-gatherers, organised into a ranked fraternity with class-ranked meeting rooms and an annual banquet. Invoked by Mayhew as a comparative case.",
+      "chapter_ref": "02-bone-grubbers-and-rag-gatherers",
+      "source_lines": [588, 592],
+      "etymology": "French chiffon = rag; chiffonier = rag-gatherer."
+    }
+  ]
+}

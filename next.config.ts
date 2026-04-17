@@ -8,11 +8,15 @@ const nextConfig: NextConfig = {
       "./source.txt",
       "./source/**/*.md",
       "./characters/**/*.md",
+      "./data/**/*.json",
+      "./package.json",
     ],
     "/": [
       "./source.txt",
       "./source/**/*.md",
       "./characters/**/*.md",
+      "./data/**/*.json",
+      "./package.json",
     ],
   },
 };

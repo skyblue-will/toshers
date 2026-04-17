@@ -28,8 +28,15 @@ export async function GET(
     });
   }
 
+  const meta = character.meta as Record<string, unknown>;
   return NextResponse.json(
-    { id, meta: character.meta, body: character.body },
+    {
+      id,
+      url: `/api/characters/${id}`,
+      source_lines: meta.source_lines ? String(meta.source_lines) : null,
+      meta,
+      body: character.body,
+    },
     { headers: { "cache-control": "public, max-age=300, s-maxage=3600" } },
   );
 }

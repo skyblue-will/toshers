@@ -29,7 +29,14 @@ Or via the CLI:
 claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp
 ```
 
-You'll get eight tools: `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character`, `search` (exact-match substring), `semantic_search` (meaning-based via embeddings), `get_source_lines`. Call `get_index` first when you start a session — it returns the entire catalogue in one shot.
+You'll get thirteen tools:
+
+- **Catalogue** — `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character`
+- **Search** — `search` (exact-match substring), `semantic_search` (meaning-based via embeddings)
+- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `voice_profile`, `normalize_price`
+- **Citation** — `get_source_lines`
+
+Call `get_index` first when you start a session — it returns the entire catalogue (plus `version` and git `commit` for cache invalidation) in one shot.
 
 **When to use which search.** `search` for exact-match queries — place names (`Bermondsey`), slang (`tosh`, `brieze`), institutions (`workhouse`), quoted phrases. `semantic_search` for concept queries — Mayhew describes many things without using the modern word (e.g. `"physical disability"` returns his passages on the paralysed waterman and the one-armed sifter even though he never writes "disability"; `"children working at night"` finds the mud-lark and dust-yard passages without depending on exact phrasing).
 
@@ -42,9 +49,19 @@ You'll get eight tools: `get_index`, `list_chapters`, `get_chapter`, `list_chara
 | `GET /api/chapters/{id}` | One chapter (`?format=raw` for markdown) |
 | `GET /api/characters` | List of testimonies with metadata |
 | `GET /api/characters/{id}` | One testimony (`?format=raw` for markdown) |
+| `GET /api/characters/{id}/voice` | TTS/voice-casting profile — gender, age band, dialect level, accent hint, speech notes |
+| `GET /api/glossary` | Canonical Victorian slang glossary (`tosh`, `pure`, `brieze` …) with chapter + line citations |
+| `GET /api/glossary/{term}` | One glossary entry |
+| `GET /api/locations` | Structured geography — lat/lng + chapter + character refs for every named London place |
+| `GET /api/relationships` | Cross-reference graph — character edges to the people and institutions they mention |
+| `GET /api/prices/normalize?pounds={n}&shillings={n}&pence={n}` | Pre-decimal → decimal pounds → modern GBP (BoE CPI 1851→2024) |
 | `GET /api/search?q={query}&limit={n}&context={n}` | **Substring** search across `source.txt` with line citations |
 | `GET /api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}` | **Semantic** search via embeddings (openai/text-embedding-3-small routed through Vercel AI Gateway + pgvector on Neon). Returns ranked hits with line citations and a `score` in 0–1. |
 | `GET /api/source?start={n}&end={m}` | Verbatim line range from `source.txt` (capped 500 lines; `?format=raw` for plain text) |
+
+**CORS:** every `/api/**` route sets `Access-Control-Allow-Origin: *`. Browser apps can fetch the library directly with no proxy.
+
+**Cache invalidation:** `/api/index` returns the current `version` (from `package.json`) and `commit` (Vercel git SHA). Downstream caches can key off these.
 
 **Citation convention:** when quoting Mayhew, cite as `source.txt:1722-1856`. The line numbers are stable across the whole library.
 

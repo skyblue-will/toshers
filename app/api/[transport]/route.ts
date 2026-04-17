@@ -10,6 +10,14 @@ import {
   search,
 } from "@/lib/content";
 import { semanticSearch } from "@/lib/semantic";
+import {
+  getGlossaryTerm,
+  listGlossary,
+  listLocations,
+  listRelationships,
+} from "@/lib/data";
+import { voiceProfile } from "@/lib/voice";
+import { normalizePrice } from "@/lib/prices";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -55,11 +63,22 @@ const handler = createMcpHandler(
             isError: true,
           };
         }
+        const meta = c.meta as Record<string, unknown>;
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ id, meta: c.meta, body: c.body }, null, 2),
+              text: JSON.stringify(
+                {
+                  id,
+                  url: `/api/chapters/${id}`,
+                  source_lines: meta.source_lines ? String(meta.source_lines) : null,
+                  meta,
+                  body: c.body,
+                },
+                null,
+                2,
+              ),
             },
           ],
         };
@@ -95,11 +114,22 @@ const handler = createMcpHandler(
             isError: true,
           };
         }
+        const meta = c.meta as Record<string, unknown>;
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ id, meta: c.meta, body: c.body }, null, 2),
+              text: JSON.stringify(
+                {
+                  id,
+                  url: `/api/characters/${id}`,
+                  source_lines: meta.source_lines ? String(meta.source_lines) : null,
+                  meta,
+                  body: c.body,
+                },
+                null,
+                2,
+              ),
             },
           ],
         };
@@ -147,6 +177,107 @@ const handler = createMcpHandler(
                 text: `Semantic search failed: ${msg}\n\nFallback: use the \`search\` tool for substring matching.`,
               },
             ],
+            isError: true,
+          };
+        }
+      },
+    );
+
+    server.tool(
+      "list_glossary",
+      "Canonical glossary of Victorian street-trade slang from the Mayhew extract — 'tosh', 'pure', 'bunters', 'brieze', 'chiffoniers', etc. Each entry has term, part of speech, definition, the chapter it lives in, and source.txt line citations. Use this instead of guessing what period slang means.",
+      {},
+      async () => ({
+        content: [{ type: "text", text: JSON.stringify(listGlossary(), null, 2) }],
+      }),
+    );
+
+    server.tool(
+      "get_glossary_term",
+      "Fetch one glossary entry by term (case-insensitive, e.g. 'tosh', 'brieze'). Returns definition + chapter + source.txt line citations.",
+      { term: z.string().describe("Glossary term, e.g. 'tosh'") },
+      async ({ term }) => {
+        const entry = getGlossaryTerm(term);
+        if (!entry) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Glossary term not found: ${term}. Call list_glossary to see all available terms.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify(entry, null, 2) }],
+        };
+      },
+    );
+
+    server.tool(
+      "list_locations",
+      "Structured London geography of the Mayhew extract — Cuckold's Point, Bermondsey tanyards, Petticoat Lane, Hyde Park fire-rubbish ground, etc. Each location has modern lat/lng coords (WGS84), a 1851 description, chapter + character cross-refs, and source.txt line citations. Use for map pins, route visualisations, or geographic queries.",
+      {},
+      async () => ({
+        content: [{ type: "text", text: JSON.stringify(listLocations(), null, 2) }],
+      }),
+    );
+
+    server.tool(
+      "list_relationships",
+      "Cross-reference graph — edges between canonical character voices and the people/institutions they mention (Long J—— the tosher's rival; Sall the dustman's partner; Bradbury & Evans the printers; Mr Brown the missing-heir pure-finder). Use for dramatis personae, NPC scaffolding, or relationship visualisations.",
+      {},
+      async () => ({
+        content: [{ type: "text", text: JSON.stringify(listRelationships(), null, 2) }],
+      }),
+    );
+
+    server.tool(
+      "voice_profile",
+      "Returns a voice-casting/TTS profile for a character: gender, age_band, dialect_level (standard|moderate|heavy), accent_hint, and speech_notes (characteristic spellings and cant words Mayhew preserves). Derived from the character's frontmatter plus per-character curation. Use for picking a narration voice or priming a stylised dialogue generator.",
+      {
+        id: z
+          .string()
+          .describe("Character id, e.g. '06-cuckolds-point-tosher'"),
+      },
+      async ({ id }) => {
+        const profile = voiceProfile(id);
+        if (!profile) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Character not found: ${id}. Call list_characters to see available ids.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify(profile, null, 2) }],
+        };
+      },
+    );
+
+    server.tool(
+      "normalize_price",
+      "Converts a pre-decimal British amount (£/s/d — pounds, shillings, pence) into decimal 1851 pounds and an approximate modern-GBP purchasing-power equivalent via the Bank of England CPI 1851→2024 inflator. Use this whenever Mayhew quotes a price or wage — e.g. `normalize_price({pounds: 3, shillings: 5})` for the tosher's Bishop Bonner's-fields haul. Returned `basis` field names the conversion source.",
+      {
+        pounds: z.number().min(0).optional().describe("Pounds (£). Default 0."),
+        shillings: z.number().min(0).optional().describe("Shillings (s). 20 per pound. Default 0."),
+        pence: z.number().min(0).optional().describe("Pence (d). 12 per shilling. Default 0."),
+      },
+      async ({ pounds, shillings, pence }) => {
+        try {
+          const result = normalizePrice({ pounds, shillings, pence });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return {
+            content: [{ type: "text", text: `normalize_price failed: ${msg}` }],
             isError: true,
           };
         }

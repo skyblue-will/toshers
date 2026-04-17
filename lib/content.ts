@@ -10,11 +10,16 @@ const SOURCE_PATH = path.join(ROOT, "source.txt");
 const SOURCE_RAW = fs.readFileSync(SOURCE_PATH, "utf8");
 const SOURCE_LINES = SOURCE_RAW.split("\n");
 
+const PACKAGE_JSON = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "package.json"), "utf8"),
+) as { version?: string };
+
 const CHAPTER_DIR = path.join(ROOT, "source");
 const CHARACTER_DIR = path.join(ROOT, "characters");
 
 export type ChapterMeta = {
   id: string;
+  url: string;
   chapter: string;
   title: string;
   source_lines: string;
@@ -24,6 +29,7 @@ export type ChapterMeta = {
 
 export type CharacterMeta = {
   id: string;
+  url: string;
   label: string;
   occupation?: string;
   chapter?: string;
@@ -32,6 +38,8 @@ export type CharacterMeta = {
   voice_type?: string;
   age_stated?: string;
   origin?: string;
+  dialect_level?: string;
+  speech_notes?: string;
   key_facts?: string[];
   game_hooks?: string[];
   file: string;
@@ -79,6 +87,7 @@ const CHARACTER_INDEX_RAW = fs.readFileSync(
 export function listChapters(): ChapterMeta[] {
   return CHAPTERS.map((c) => ({
     id: c.id,
+    url: `/api/chapters/${c.id}`,
     chapter: String(c.meta.chapter ?? ""),
     title: String(c.meta.title ?? ""),
     source_lines: String(c.meta.source_lines ?? ""),
@@ -92,6 +101,7 @@ export function listCharacters(): CharacterMeta[] {
     const m = c.meta as Record<string, unknown>;
     return {
       id: c.id,
+      url: `/api/characters/${c.id}`,
       label: String(m.label ?? ""),
       occupation: m.occupation ? String(m.occupation) : undefined,
       chapter: m.chapter ? String(m.chapter) : undefined,
@@ -100,6 +110,8 @@ export function listCharacters(): CharacterMeta[] {
       voice_type: m.voice_type ? String(m.voice_type) : undefined,
       age_stated: m.age_stated ? String(m.age_stated) : undefined,
       origin: m.origin ? String(m.origin) : undefined,
+      dialect_level: m.dialect_level ? String(m.dialect_level) : undefined,
+      speech_notes: m.speech_notes ? String(m.speech_notes) : undefined,
       key_facts: Array.isArray(m.key_facts) ? (m.key_facts as string[]) : undefined,
       game_hooks: Array.isArray(m.game_hooks) ? (m.game_hooks as string[]) : undefined,
       file: c.file,
@@ -180,6 +192,9 @@ export function search(
 
 export function getMasterIndex() {
   return {
+    version: PACKAGE_JSON.version ?? null,
+    commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+    ref: process.env.VERCEL_GIT_COMMIT_REF ?? null,
     source: {
       file: "source.txt",
       total_lines: SOURCE_LINES.length,
@@ -196,12 +211,19 @@ export function getMasterIndex() {
     api: {
       docs: "/",
       mcp_endpoint: "/api/mcp",
+      cors: "Access-Control-Allow-Origin: * on all /api/** routes; safe to fetch from any browser origin.",
       rest: {
         master_index: "/api/index",
         chapters_list: "/api/chapters",
         chapter: "/api/chapters/{id}",
         characters_list: "/api/characters",
         character: "/api/characters/{id}",
+        character_voice: "/api/characters/{id}/voice",
+        glossary_list: "/api/glossary",
+        glossary_term: "/api/glossary/{term}",
+        locations_list: "/api/locations",
+        relationships_list: "/api/relationships",
+        price_normalize: "/api/prices/normalize?pounds={n}&shillings={n}&pence={n}",
         search: "/api/search?q={query}&limit={n}",
         semantic_search: "/api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}",
         source_lines: "/api/source?start={n}&end={m}",
