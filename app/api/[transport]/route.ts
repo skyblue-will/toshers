@@ -13,7 +13,10 @@ import { semanticSearch } from "@/lib/semantic";
 import {
   getGlossaryTerm,
   listGlossary,
+  listIllustrations,
   listLocations,
+  listQuiz,
+  listQuotes,
   listRelationships,
 } from "@/lib/data";
 import { voiceProfile } from "@/lib/voice";
@@ -285,6 +288,41 @@ const handler = createMcpHandler(
     );
 
     server.tool(
+      "list_quotes",
+      "Canonical pulled-quotes from the Mayhew extract — verbatim text plus speaker_id, dialect_level (standard|moderate|heavy), theme, and a tts_normalized rendition for narration engines that struggle with 19th-century phonetic spellings. Filter by speaker_id, chapter_ref, theme, or dialect_level. Use for headline cards, quote-of-the-day panels, TTS audio, or fact-checking a rendered snippet.",
+      {
+        speaker_id: z.string().optional().describe("Character id, e.g. '06-cuckolds-point-tosher' or 'mayhew' for the narrator"),
+        chapter_ref: z.string().optional().describe("Chapter id to filter by"),
+        theme: z.string().optional().describe("Theme tag: philosophy, hazard, technique, relationship, economy, etc."),
+        dialect_level: z.enum(["standard", "moderate", "heavy"]).optional().describe("Dialect density filter"),
+      },
+      async (args) => ({
+        content: [{ type: "text", text: JSON.stringify(listQuotes(args), null, 2) }],
+      }),
+    );
+
+    server.tool(
+      "list_illustrations",
+      "Original 1861 woodcut plates from Mayhew's Vol. II, engraved from Richard Beard daguerreotypes — bone-grubber, mud-lark, sewer-hunter, dust-yard, rat-catcher, nightmen, etc. Each entry has display and high-res image URLs (Project Gutenberg, public domain), caption, chapter + character refs. Use for map-marker artwork, card illustrations, or citation-backed visual research.",
+      {},
+      async () => ({
+        content: [{ type: "text", text: JSON.stringify(listIllustrations(), null, 2) }],
+      }),
+    );
+
+    server.tool(
+      "list_quiz",
+      "Canonical fact-check triples from the Mayhew extract — question, answer, and source.txt line citation. Filter by chapter_ref or difficulty (easy|medium|hard). Use for quiz features or answer-validation when a consumer agent has generated an assertion about the text.",
+      {
+        chapter_ref: z.string().optional().describe("Chapter id to filter by"),
+        difficulty: z.enum(["easy", "medium", "hard"]).optional().describe("Difficulty filter"),
+      },
+      async (args) => ({
+        content: [{ type: "text", text: JSON.stringify(listQuiz(args), null, 2) }],
+      }),
+    );
+
+    server.tool(
       "get_source_lines",
       "Fetch a verbatim slice from source.txt by line range. Useful for quoting Mayhew with exact citations. Capped at 500 lines per call. Returns clamped start/end and the raw text.",
       {
@@ -294,6 +332,99 @@ const handler = createMcpHandler(
       async ({ start, end }) => ({
         content: [
           { type: "text", text: JSON.stringify(getSourceLines(start, end), null, 2) },
+        ],
+      }),
+    );
+
+    // ---------- Prompts — opinionated starting points for common synthesis tasks ----------
+
+    server.prompt(
+      "summarise_character_for_kids",
+      "Return a kid-safe (age 10+) summary of one character's life and trade, drawing only on their testimony file. No harm details (rat-eating, child death, alcoholism) beyond a gentle mention; keep tone curious and historical.",
+      { character_id: z.string().describe("Character id, e.g. '06-cuckolds-point-tosher'") },
+      async ({ character_id }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Call get_character("${character_id}") to read the source testimony. Then write a 150-200-word summary suitable for a ten-year-old reader: (1) what this person did for work; (2) where and when they lived; (3) one memorable detail from their own words; (4) what their life tells us about Victorian London. Use plain modern English. Keep quotes short and normalise heavy dialect via voice_profile if needed. Do not invent facts beyond the source.`,
+            },
+          },
+        ],
+      }),
+    );
+
+    server.prompt(
+      "narrate_character_in_voice",
+      "Produce a first-person monologue in the character's own voice and dialect, drawn from their testimony — suitable as copy for an audio narration or dramatic reading.",
+      {
+        character_id: z.string().describe("Character id, e.g. '06-cuckolds-point-tosher'"),
+        length: z.enum(["short", "medium", "long"]).optional().describe("Target length: short ~100 words, medium ~250, long ~500. Default medium."),
+      },
+      async ({ character_id, length }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Call get_character("${character_id}") to load the testimony and voice_profile("${character_id}") to pick up dialect hints. Then write a first-person monologue (${length ?? "medium"} length) in this character's own voice — preserving dialect_level and characteristic spellings per their voice_profile. Draw only on claims in their file; do not invent biography. End with one line from their testimony verbatim, cited as source.txt:start-end.`,
+            },
+          },
+        ],
+      }),
+    );
+
+    server.prompt(
+      "find_passages_on",
+      "Given a topic, return the best 3-5 passages across the whole corpus — via substring + semantic search, ranked and cited.",
+      { topic: z.string().describe("Topic or concept, e.g. 'fear of authority' or 'tide'") },
+      async ({ topic }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `For the topic "${topic}", call BOTH search("${topic}") for exact-match and semantic_search("${topic}", 5) for concept-match. Merge the results, dedupe by source_lines overlap, and return the top 3-5 passages ranked by relevance. For each: quote 1-2 sentences verbatim, cite source.txt:start-end, and add one sentence of why it's relevant. Do not paraphrase the quotes.`,
+            },
+          },
+        ],
+      }),
+    );
+
+    server.prompt(
+      "map_tour",
+      "Generate a walking tour of a character's beat as a sequence of map stops with descriptions and citations — suitable input for a mapping UI.",
+      { character_id: z.string().describe("Character id, e.g. '03-pure-finder-widow' or '06-cuckolds-point-tosher'") },
+      async ({ character_id }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Call get_character("${character_id}") and list_locations(). Assemble the character's working beat as an ordered list of stops. For each stop include: location_id, name, coords (from list_locations), one-sentence description of what happens here per this character's testimony, and a source_lines citation. Return as JSON array ready to drop into a map UI. If the character references a location not in list_locations, include it with coords: null and flag it.`,
+            },
+          },
+        ],
+      }),
+    );
+
+    server.prompt(
+      "quiz_on",
+      "Return 3 fact-check quiz items on a chapter or topic, drawn from list_quiz() plus fresh items grounded in the source.",
+      {
+        chapter_ref: z.string().optional().describe("Optional chapter id"),
+        difficulty: z.enum(["easy", "medium", "hard"]).optional().describe("Optional difficulty"),
+      },
+      async ({ chapter_ref, difficulty }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Call list_quiz(${JSON.stringify({ chapter_ref, difficulty })}) to get the canonical triples. Pick 3; if the filters yield fewer than 3, generate additional items by calling get_chapter or search for a concrete fact and writing a Q/A/citation triple in the same shape. Return 3 items total as JSON [{question, answer, citation: {file, source_lines}}]. Every answer must be directly verifiable in source.txt via the citation.`,
+            },
+          },
         ],
       }),
     );

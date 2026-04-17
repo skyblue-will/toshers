@@ -1,0 +1,554 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "toshers",
+    "version": "0.1.0",
+    "description": "A curated REST + MCP library over Henry Mayhew's 1851 London Labour and the London Poor, Vol. II — the street-finders (bone-grubbers, pure-finders, sewer-hunters/toshers, mud-larks, dustmen). Every claim is line-citable against source.txt. No auth, CORS wide open.",
+    "license": { "name": "Public domain (source); code MIT", "identifier": "MIT" },
+    "contact": { "url": "https://github.com/skyblue-will/toshers" }
+  },
+  "servers": [
+    { "url": "https://toshers.vercel.app", "description": "Production" }
+  ],
+  "tags": [
+    { "name": "catalogue", "description": "Master catalogue and navigation" },
+    { "name": "chapter", "description": "Chapter-level primary source" },
+    { "name": "character", "description": "Character testimonies (first-person voices)" },
+    { "name": "synthesis", "description": "Derived/curated second-order endpoints" },
+    { "name": "search", "description": "Search over the corpus" },
+    { "name": "source", "description": "Verbatim source.txt access" }
+  ],
+  "paths": {
+    "/api/index": {
+      "get": {
+        "tags": ["catalogue"],
+        "summary": "Master catalogue",
+        "description": "Returns source metadata, all chapter summaries, all character summaries, INDEX.md contents, version, and git commit. Call this once at session start.",
+        "responses": {
+          "200": {
+            "description": "Master catalogue",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MasterIndex" } } }
+          }
+        }
+      }
+    },
+    "/api/chapters": {
+      "get": {
+        "tags": ["chapter"],
+        "summary": "List all chapters",
+        "responses": {
+          "200": {
+            "description": "Chapters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "chapters": { "type": "array", "items": { "$ref": "#/components/schemas/ChapterMeta" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chapters/{id}": {
+      "get": {
+        "tags": ["chapter"],
+        "summary": "One chapter",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] }, "description": "If 'raw', returns the full markdown file as text/markdown" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chapter",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Chapter" } },
+              "text/markdown": { "schema": { "type": "string" } }
+            }
+          },
+          "404": { "description": "Chapter id not found" }
+        }
+      }
+    },
+    "/api/characters": {
+      "get": {
+        "tags": ["character"],
+        "summary": "List all character testimonies",
+        "responses": {
+          "200": {
+            "description": "Characters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "characters": { "type": "array", "items": { "$ref": "#/components/schemas/CharacterMeta" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/characters/{id}": {
+      "get": {
+        "tags": ["character"],
+        "summary": "One character testimony",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Character",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Character" } },
+              "text/markdown": { "schema": { "type": "string" } }
+            }
+          },
+          "404": { "description": "Character id not found" }
+        }
+      }
+    },
+    "/api/characters/{id}/voice": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Voice-casting / TTS profile for one character",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Voice profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceProfile" } } } },
+          "404": { "description": "Character id not found" }
+        }
+      }
+    },
+    "/api/glossary": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Victorian slang glossary",
+        "responses": {
+          "200": { "description": "Glossary", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Glossary" } } } }
+        }
+      }
+    },
+    "/api/glossary/{term}": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "One glossary entry",
+        "parameters": [{ "name": "term", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Glossary entry", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GlossaryEntry" } } } },
+          "404": { "description": "Term not found" }
+        }
+      }
+    },
+    "/api/locations": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Structured London geography",
+        "responses": {
+          "200": { "description": "Locations", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Locations" } } } }
+        }
+      }
+    },
+    "/api/relationships": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Cross-reference graph",
+        "responses": {
+          "200": { "description": "Relationships", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Relationships" } } } }
+        }
+      }
+    },
+    "/api/quotes": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Canonical quotes with dialect and TTS annotation",
+        "parameters": [
+          { "name": "speaker_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "chapter_ref", "in": "query", "schema": { "type": "string" } },
+          { "name": "theme", "in": "query", "schema": { "type": "string" } },
+          { "name": "dialect_level", "in": "query", "schema": { "type": "string", "enum": ["standard", "moderate", "heavy"] } }
+        ],
+        "responses": {
+          "200": { "description": "Quotes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Quotes" } } } }
+        }
+      }
+    },
+    "/api/illustrations": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Original 1861 woodcut plates (Beard daguerreotypes) with PD image URLs",
+        "responses": {
+          "200": { "description": "Illustrations", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Illustrations" } } } }
+        }
+      }
+    },
+    "/api/quiz": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Fact-check quiz triples",
+        "parameters": [
+          { "name": "chapter_ref", "in": "query", "schema": { "type": "string" } },
+          { "name": "difficulty", "in": "query", "schema": { "type": "string", "enum": ["easy", "medium", "hard"] } }
+        ],
+        "responses": {
+          "200": { "description": "Quiz", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Quiz" } } } }
+        }
+      }
+    },
+    "/api/prices/normalize": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Pre-decimal £/s/d → modern GBP (BoE CPI)",
+        "parameters": [
+          { "name": "pounds", "in": "query", "schema": { "type": "number", "minimum": 0 } },
+          { "name": "shillings", "in": "query", "schema": { "type": "number", "minimum": 0 } },
+          { "name": "pence", "in": "query", "schema": { "type": "number", "minimum": 0 } }
+        ],
+        "responses": {
+          "200": { "description": "Normalized price", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NormalizedPrice" } } } }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Substring search across source.txt",
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 } },
+          { "name": "context", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 } }
+        ],
+        "responses": {
+          "200": { "description": "Search hits", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SearchResult" } } } }
+        }
+      }
+    },
+    "/api/search/semantic": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Semantic (embedding) search — finds concepts without exact wording",
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 } },
+          { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["source", "chapter", "character"] } }
+        ],
+        "responses": {
+          "200": { "description": "Ranked hits with score 0-1", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SemanticSearchResult" } } } },
+          "503": { "description": "Semantic path unavailable — fall back to /api/search" }
+        }
+      }
+    },
+    "/api/source": {
+      "get": {
+        "tags": ["source"],
+        "summary": "Verbatim source.txt slice (capped 500 lines)",
+        "parameters": [
+          { "name": "start", "in": "query", "required": true, "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "end", "in": "query", "required": true, "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Line range",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SourceSlice" } },
+              "text/plain": { "schema": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChapterMeta": {
+        "type": "object",
+        "required": ["id", "url", "chapter", "title", "source_lines", "hook", "file"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "chapter": { "type": "string" },
+          "title": { "type": "string" },
+          "source_lines": { "type": "string" },
+          "hook": { "type": "string" },
+          "file": { "type": "string" }
+        }
+      },
+      "CharacterMeta": {
+        "type": "object",
+        "required": ["id", "url", "label", "source_lines", "file"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "label": { "type": "string" },
+          "occupation": { "type": "string" },
+          "chapter": { "type": "string" },
+          "source_lines": { "type": "string" },
+          "anonymity": { "type": "string" },
+          "voice_type": { "type": "string" },
+          "age_stated": { "type": "string" },
+          "origin": { "type": "string" },
+          "dialect_level": { "type": "string" },
+          "speech_notes": { "type": "string" },
+          "key_facts": { "type": "array", "items": { "type": "string" } },
+          "game_hooks": { "type": "array", "items": { "type": "string" } },
+          "file": { "type": "string" }
+        }
+      },
+      "Chapter": {
+        "type": "object",
+        "required": ["id", "url", "meta", "body"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "source_lines": { "type": ["string", "null"] },
+          "meta": { "type": "object", "additionalProperties": true },
+          "body": { "type": "string" }
+        }
+      },
+      "Character": {
+        "type": "object",
+        "required": ["id", "url", "meta", "body"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "source_lines": { "type": ["string", "null"] },
+          "meta": { "type": "object", "additionalProperties": true },
+          "body": { "type": "string" }
+        }
+      },
+      "MasterIndex": {
+        "type": "object",
+        "properties": {
+          "version": { "type": ["string", "null"] },
+          "commit": { "type": ["string", "null"] },
+          "ref": { "type": ["string", "null"] },
+          "source": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "total_lines": { "type": "integer" },
+              "total_words": { "type": "integer" },
+              "description": { "type": "string" }
+            }
+          },
+          "chapters": { "type": "array", "items": { "$ref": "#/components/schemas/ChapterMeta" } },
+          "characters": { "type": "array", "items": { "$ref": "#/components/schemas/CharacterMeta" } },
+          "indexes": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "string" },
+              "characters": { "type": "string" }
+            }
+          },
+          "api": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "VoiceProfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "label": { "type": "string" },
+          "gender": { "type": "string", "enum": ["male", "female", "unknown"] },
+          "age_band": { "type": "string", "enum": ["child", "youth", "adult", "elder", "unknown"] },
+          "age_stated": { "type": ["string", "null"] },
+          "origin": { "type": ["string", "null"] },
+          "dialect_level": { "type": "string", "enum": ["standard", "moderate", "heavy", "composite"] },
+          "accent_hint": { "type": "string" },
+          "speech_notes": { "type": "string" }
+        }
+      },
+      "GlossaryEntry": {
+        "type": "object",
+        "properties": {
+          "term": { "type": "string" },
+          "pos": { "type": "string" },
+          "definition": { "type": "string" },
+          "chapter_ref": { "type": "string" },
+          "source_lines": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
+          "etymology": { "type": ["string", "null"] }
+        }
+      },
+      "Glossary": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "integer" },
+          "description": { "type": "string" },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/GlossaryEntry" } }
+        }
+      },
+      "LocationEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "coords": { "type": ["array", "null"], "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+          "era": { "type": "string" },
+          "description": { "type": "string" },
+          "chapter_refs": { "type": "array", "items": { "type": "string" } },
+          "character_refs": { "type": "array", "items": { "type": "string" } },
+          "source_lines": { "type": ["array", "null"], "items": { "type": "integer" } }
+        }
+      },
+      "Locations": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "integer" },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/LocationEntry" } }
+        }
+      },
+      "RelationshipEdge": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "from": { "type": "object" },
+          "to": { "type": "object" },
+          "type": { "type": "string" },
+          "description": { "type": "string" },
+          "source_lines": { "type": ["array", "null"], "items": { "type": "integer" } }
+        }
+      },
+      "Relationships": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "integer" },
+          "edges": { "type": "array", "items": { "$ref": "#/components/schemas/RelationshipEdge" } }
+        }
+      },
+      "QuoteEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string" },
+          "speaker_id": { "type": "string" },
+          "speaker_label": { "type": "string" },
+          "chapter_ref": { "type": "string" },
+          "source_lines": { "type": "array", "items": { "type": "integer" } },
+          "dialect_level": { "type": "string", "enum": ["standard", "moderate", "heavy"] },
+          "theme": { "type": "string" },
+          "tts_normalized": { "type": "string" },
+          "context": { "type": "string" }
+        }
+      },
+      "Quotes": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "integer" },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/QuoteEntry" } }
+        }
+      },
+      "IllustrationEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "url_hires": { "type": "string" },
+          "caption": { "type": "string" },
+          "chapter_refs": { "type": "array", "items": { "type": "string" } },
+          "character_refs": { "type": "array", "items": { "type": "string" } },
+          "description": { "type": "string" }
+        }
+      },
+      "Illustrations": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "integer" },
+          "attribution": { "type": "string" },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/IllustrationEntry" } }
+        }
+      },
+      "QuizEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "question": { "type": "string" },
+          "answer": { "type": "string" },
+          "citation": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "source_lines": { "type": "array", "items": { "type": "integer" } }
+            }
+          },
+          "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+          "chapter_ref": { "type": "string" }
+        }
+      },
+      "Quiz": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "integer" },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/QuizEntry" } }
+        }
+      },
+      "NormalizedPrice": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "object",
+            "properties": {
+              "pounds": { "type": "number" },
+              "shillings": { "type": "number" },
+              "pence": { "type": "number" }
+            }
+          },
+          "decimal_pounds_1851": { "type": "number" },
+          "modern_gbp_approx": { "type": "number" },
+          "basis": { "type": "string" },
+          "basis_source": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      },
+      "SearchHit": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "integer" },
+          "snippet": { "type": "string" },
+          "context_start": { "type": "integer" },
+          "context_end": { "type": "integer" },
+          "context": { "type": "string" }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "hits": { "type": "array", "items": { "$ref": "#/components/schemas/SearchHit" } },
+          "total_matches": { "type": "integer" }
+        }
+      },
+      "SemanticSearchHit": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string", "enum": ["source", "chapter", "character"] },
+          "doc_id": { "type": ["string", "null"] },
+          "source_lines": { "type": "array", "items": { "type": "integer" } },
+          "text": { "type": "string" },
+          "score": { "type": "number" }
+        }
+      },
+      "SemanticSearchResult": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "hits": { "type": "array", "items": { "$ref": "#/components/schemas/SemanticSearchHit" } }
+        }
+      },
+      "SourceSlice": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "integer" },
+          "end": { "type": "integer" },
+          "text": { "type": "string" }
+        }
+      }
+    }
+  }
+}

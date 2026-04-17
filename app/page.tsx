@@ -61,7 +61,7 @@ export default function Home() {
         <h3>3. Edit your settings file by hand</h3>
         <p>Add the <code>mcpServers</code> block above to <code>~/.claude/settings.json</code> (user-scoped) or <code>.claude/settings.json</code> (project-scoped, gitignored if you don&rsquo;t want to share).</p>
 
-        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains thirteen tools:</p>
+        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains sixteen tools plus five prompts:</p>
         <div className="endpoint-grid">
           <div className="endpoint"><span className="method">tool</span><span className="path">get_index</span><span className="desc">Master catalogue — call first to orient. Returns version + git commit for cache invalidation</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_chapters</span><span className="desc">Lightweight chapter metadata only</span></div>
@@ -75,8 +75,16 @@ export default function Home() {
           <div className="endpoint"><span className="method">tool</span><span className="path">list_locations</span><span className="desc">London geography with lat/lng coords for map-pinning</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_relationships</span><span className="desc">Cross-reference graph — character edges to mentioned people and institutions</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">voice_profile(id)</span><span className="desc">TTS/voice-casting profile per character — dialect level, accent hint, speech notes</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">list_quotes(speaker_id?, chapter_ref?, theme?, dialect_level?)</span><span className="desc">Verbatim pulled-quotes with dialect level + TTS-normalised rendition</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">list_illustrations</span><span className="desc">17 Beard-daguerreotype plates with PD Gutenberg image URLs</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">list_quiz(chapter_ref?, difficulty?)</span><span className="desc">Canonical fact-check triples — question, answer, source.txt citation</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">normalize_price(pounds, shillings, pence)</span><span className="desc">Pre-decimal £/s/d → decimal → modern GBP via BoE CPI 1851→2024</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_source_lines(start, end)</span><span className="desc">Verbatim slice from source.txt for citation-backed quoting</span></div>
+          <div className="endpoint"><span className="method">prompt</span><span className="path">summarise_character_for_kids(character_id)</span><span className="desc">Age-10+ summary of a testimony, drawn from the source file</span></div>
+          <div className="endpoint"><span className="method">prompt</span><span className="path">narrate_character_in_voice(character_id, length?)</span><span className="desc">First-person monologue in the character's own dialect</span></div>
+          <div className="endpoint"><span className="method">prompt</span><span className="path">find_passages_on(topic)</span><span className="desc">Top 3–5 passages via combined substring + semantic search, ranked and cited</span></div>
+          <div className="endpoint"><span className="method">prompt</span><span className="path">map_tour(character_id)</span><span className="desc">Ordered walking tour of a character's beat as JSON for a map UI</span></div>
+          <div className="endpoint"><span className="method">prompt</span><span className="path">quiz_on(chapter_ref?, difficulty?)</span><span className="desc">3 fact-check triples with source.txt citations</span></div>
         </div>
       </section>
 
@@ -95,6 +103,10 @@ export default function Home() {
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/locations">/api/locations</a></span><span className="desc">Structured London geography with modern lat/lng coords, chapter and character refs</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/relationships">/api/relationships</a></span><span className="desc">Cross-reference graph — character edges to mentioned people and institutions</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/prices/normalize?pounds=3&shillings=5">/api/prices/normalize?pounds={`{n}`}&amp;shillings={`{n}`}&amp;pence={`{n}`}</a></span><span className="desc">Pre-decimal £/s/d → decimal pounds → modern GBP via BoE CPI 1851→2024</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/quotes">/api/quotes</a></span><span className="desc">Canonical pulled-quotes with dialect level and TTS-normalised rendition. Filter by <code>?speaker_id=</code>, <code>?chapter_ref=</code>, <code>?theme=</code>, <code>?dialect_level=</code></span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/illustrations">/api/illustrations</a></span><span className="desc">17 original 1861 plates with public-domain image URLs (Project Gutenberg)</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/quiz">/api/quiz</a></span><span className="desc">Canonical fact-check triples. Filter by <code>?chapter_ref=</code> or <code>?difficulty=easy|medium|hard</code></span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/openapi.json">/api/openapi.json</a></span><span className="desc">OpenAPI 3.1 spec — feed to an OpenAPI code generator for a typed client in any language</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search?q=rats">/api/search?q={`{query}`}&amp;limit={`{n}`}</a></span><span className="desc">Exact-match substring search; returns line numbers, snippets, and surrounding context</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search/semantic?q=physical+disability&limit=3">/api/search/semantic?q={`{query}`}&amp;limit={`{n}`}&amp;kind={`{source|chapter|character}`}</a></span><span className="desc">Meaning-based search via embeddings; returns ranked hits with citations (try it — finds passages by concept even when Mayhew never uses the modern word)</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/source?start=1722&end=1740">/api/source?start={`{n}`}&amp;end={`{m}`}</a></span><span className="desc">Verbatim line range (capped 500 lines; <code>?format=raw</code> for plain text)</span></div>

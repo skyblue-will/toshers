@@ -91,3 +91,110 @@ const RELATIONSHIPS: Relationships = loadJson<Relationships>("relationships.json
 export function listRelationships(): Relationships {
   return RELATIONSHIPS;
 }
+
+// ---------- Quotes ----------
+
+export type QuoteEntry = {
+  id: string;
+  text: string;
+  speaker_id: string;
+  speaker_label: string;
+  chapter_ref: string;
+  source_lines: [number, number];
+  dialect_level: "standard" | "moderate" | "heavy";
+  theme: string;
+  tts_normalized: string;
+  context: string;
+};
+
+export type Quotes = {
+  version: number;
+  description: string;
+  dialect_levels: Record<string, string>;
+  entries: QuoteEntry[];
+};
+
+const QUOTES: Quotes = loadJson<Quotes>("quotes.json");
+
+export function listQuotes(filter?: {
+  speaker_id?: string;
+  chapter_ref?: string;
+  theme?: string;
+  dialect_level?: string;
+}): Quotes {
+  let entries = QUOTES.entries;
+  if (filter?.speaker_id) {
+    entries = entries.filter((e) => e.speaker_id === filter.speaker_id);
+  }
+  if (filter?.chapter_ref) {
+    entries = entries.filter((e) => e.chapter_ref === filter.chapter_ref);
+  }
+  if (filter?.theme) {
+    entries = entries.filter((e) => e.theme === filter.theme);
+  }
+  if (filter?.dialect_level) {
+    entries = entries.filter((e) => e.dialect_level === filter.dialect_level);
+  }
+  return { ...QUOTES, entries };
+}
+
+// ---------- Illustrations ----------
+
+export type IllustrationEntry = {
+  id: string;
+  title: string;
+  url: string;
+  url_hires: string;
+  caption: string;
+  chapter_refs: string[];
+  character_refs: string[];
+  description: string;
+};
+
+export type Illustrations = {
+  version: number;
+  description: string;
+  source_edition: string;
+  attribution: string;
+  digitised_by: string;
+  entries: IllustrationEntry[];
+};
+
+const ILLUSTRATIONS: Illustrations = loadJson<Illustrations>("illustrations.json");
+
+export function listIllustrations(): Illustrations {
+  return ILLUSTRATIONS;
+}
+
+// ---------- Quiz ----------
+
+export type QuizEntry = {
+  id: string;
+  question: string;
+  answer: string;
+  citation: { file: string; source_lines: [number, number] };
+  difficulty: "easy" | "medium" | "hard";
+  chapter_ref: string;
+};
+
+export type Quiz = {
+  version: number;
+  description: string;
+  entries: QuizEntry[];
+};
+
+const QUIZ: Quiz = loadJson<Quiz>("quiz.json");
+
+export function listQuiz(filter?: {
+  chapter_ref?: string;
+  difficulty?: string;
+}): Quiz {
+  let entries = QUIZ.entries;
+  if (filter?.chapter_ref) {
+    entries = entries.filter((e) => e.chapter_ref === filter.chapter_ref);
+  }
+  if (filter?.difficulty) {
+    entries = entries.filter((e) => e.difficulty === filter.difficulty);
+  }
+  return { ...QUIZ, entries };
+}

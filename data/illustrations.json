@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "description": "Original 1861 woodcut illustrations from Mayhew's 'London Labour and the London Poor' Vol. II — engraved from daguerreotypes by Richard Beard. All in the public domain. URLs point at Project Gutenberg's scan (ebook 60440). `url` is the display-sized image; `url_hires` is the high-resolution version. Every plate is reproducible — download, self-host, or link directly.",
+  "source_edition": "Henry Mayhew, 'London Labour and the London Poor' Vol. II (1861 expanded edition).",
+  "attribution": "Engraved c. 1851 from daguerreotypes by Richard Beard (1801–1885). Public domain (pre-1928 US, pre-1928 UK author d. 1885).",
+  "digitised_by": "Project Gutenberg, ebook #60440 — https://www.gutenberg.org/ebooks/60440",
+  "entries": [
+    {
+      "id": "bone-grubber",
+      "title": "The Bone-Grubber",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image07.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image07h.jpg",
+      "caption": "THE BONE-GRUBBER.",
+      "chapter_refs": ["02-bone-grubbers-and-rag-gatherers"],
+      "character_refs": ["01-liverpool-bone-grubber", "02-cheque-finder-grubber"],
+      "description": "Man in ragged coat and battered hat with the trade's bag and hooked stick. The archetypal bone-grubber figure Mayhew describes as \"covered with bird-lime\" from grease and dust."
+    },
+    {
+      "id": "mud-lark",
+      "title": "The Mud-Lark",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image08.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image08h.jpg",
+      "caption": "THE MUD-LARK.",
+      "chapter_refs": ["08-mud-larks"],
+      "character_refs": ["07-nine-year-old-mud-lark", "08-seven-year-old-mud-lark", "09-jc-coalwhipper-son-mud-lark"],
+      "description": "Boy on the Thames foreshore at low tide, barefoot, with a tin for his finds. The primary visual reference for the three child testimonies in this library."
+    },
+    {
+      "id": "london-dustman",
+      "title": "The London Dustman",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image09.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image09h.jpg",
+      "caption": "THE LONDON DUSTMAN.",
+      "chapter_refs": ["10-dustmen-of-london"],
+      "character_refs": ["10-dustman-and-sall"],
+      "description": "Dustman in fan-tailed hat and leather back-flap, with bell and shoulder-basket. Fan-tail is an occupational identifier visible across the trade."
+    },
+    {
+      "id": "dust-yard",
+      "title": "View of a Dust-Yard",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image10.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image10h.jpg",
+      "caption": "VIEW OF A DUST YARD.",
+      "chapter_refs": ["10-dustmen-of-london"],
+      "character_refs": ["10-dustman-and-sall"],
+      "description": "Panorama of a working dust-yard: sifting gangs (mostly women), piled heaps, carts unloading. Direct visual reference for the Mayhew passage on the ~£147,700 annual dust trade."
+    },
+    {
+      "id": "london-scavenger",
+      "title": "The London Scavenger",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image11.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image11h.jpg",
+      "caption": "THE LONDON SCAVENGER.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview", "11-london-sewerage-and-scavengery"],
+      "character_refs": [],
+      "description": "Street-cleansing labourer with broom and shovel. The scavenger class is the third tier of Mayhew's finder/collector taxonomy."
+    },
+    {
+      "id": "able-bodied-street-sweeper",
+      "title": "The Able-Bodied Pauper Street-Sweeper",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image13.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image13h.jpg",
+      "caption": "THE ABLE-BODIED PAUPER STREET-SWEEPER.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview"],
+      "character_refs": [],
+      "description": "Workhouse-assigned street labourer — the pauper tier of sweeping, distinct from the independent street-sweeper or the chimney-sweep."
+    },
+    {
+      "id": "rubbish-carter",
+      "title": "The Rubbish Carter",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image14.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image14h.jpg",
+      "caption": "THE RUBBISH CARTER.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview", "11-london-sewerage-and-scavengery"],
+      "character_refs": [],
+      "description": "Cart-driver removing builders' rubbish and house-refuse. Peripheral collector class in Mayhew's scheme."
+    },
+    {
+      "id": "london-sweep",
+      "title": "The London Sweep",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image15.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image15h.jpg",
+      "caption": "THE LONDON SWEEP.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview"],
+      "character_refs": [],
+      "description": "Adult chimney-sweep with rods and soot-sack. The post-climbing-boy era depicted; the next plate shows a climbing sweep."
+    },
+    {
+      "id": "climbing-sweep",
+      "title": "One of the Few Remaining Climbing Sweeps",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image16.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image16h.jpg",
+      "caption": "ONE OF THE FEW REMAINING CLIMBING SWEEPS.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview"],
+      "character_refs": [],
+      "description": "A surviving child climbing-sweep — by 1861 the Act of 1840 had nominally banned the practice; Mayhew's inclusion of this plate is political."
+    },
+    {
+      "id": "sweeps-home",
+      "title": "The Sweeps' Home",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image18.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image18h.jpg",
+      "caption": "THE SWEEPS' HOME.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview"],
+      "character_refs": [],
+      "description": "Domestic interior of a sweep's household — smoke-blackened walls, sleeping children. The domestic counterpart to the occupational plates."
+    },
+    {
+      "id": "sewer-hunter",
+      "title": "The Sewer-Hunter",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image19.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image19h.jpg",
+      "caption": "THE SEWER-HUNTER.",
+      "chapter_refs": ["07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "description": "⭐ THE REPO NAMESAKE PLATE. Tosher in long greasy velveteen coat, eight-foot iron-hooked pole over shoulder, lantern hanging from the waist, dirty canvas trousers. The iconic visual record of the trade that gave this library its name."
+    },
+    {
+      "id": "sewer-diagram",
+      "title": "Diagram of the Sewer (cross-section)",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image20.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image20h.jpg",
+      "caption": "Diagram of the [sewer cross-section]",
+      "chapter_refs": ["07-sewer-hunters-toshers", "11-london-sewerage-and-scavengery"],
+      "character_refs": [],
+      "description": "Technical diagram of a London sewer in cross-section — used in the engineering portion of the sewerage chapter. Useful reference for any map/game that needs underground geometry."
+    },
+    {
+      "id": "flushing-the-sewers",
+      "title": "Flushing the Sewers",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image21.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image21h.jpg",
+      "caption": "FLUSHING THE SEWERS.",
+      "chapter_refs": ["11-london-sewerage-and-scavengery"],
+      "character_refs": [],
+      "description": "Commissioner workmen releasing water to scour the sewers — the institutional rival to the freelance toshers, who worked the same tunnels illegally."
+    },
+    {
+      "id": "rat-catchers-of-the-sewers",
+      "title": "The Rat-Catchers of the Sewers",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image22.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image22h.jpg",
+      "caption": "THE RAT-CATCHERS OF THE SEWERS.",
+      "chapter_refs": ["11-london-sewerage-and-scavengery"],
+      "character_refs": [],
+      "description": "Men with dogs and lanterns working a sewer outlet for rats — the predators the toshers feared (\"them there water rats … would think nothink of tackling a man\"). Directly supports the 06-cuckolds-point-tosher testimony."
+    },
+    {
+      "id": "london-nightmen",
+      "title": "London Nightmen",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image23.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image23h.jpg",
+      "caption": "LONDON NIGHTMEN.",
+      "chapter_refs": ["09-dustmen-sweeps-scavengers-overview", "11-london-sewerage-and-scavengery"],
+      "character_refs": [],
+      "description": "Cesspool-emptiers at work by lantern-light — the other nocturnal trade of the sanitation economy. Worked in teams of four with long-handled shovels and horse-carts."
+    },
+    {
+      "id": "petticoat-lane-scene",
+      "title": "Scene in Petticoat-Lane",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image01.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image01h.jpg",
+      "caption": "SCENE IN PETTICOAT-LANE.",
+      "chapter_refs": ["02-bone-grubbers-and-rag-gatherers", "07-sewer-hunters-toshers"],
+      "character_refs": ["06-cuckolds-point-tosher"],
+      "description": "Street-scene in the rag-and-old-clothes market quarter. The Petticoat-Lane Jew fence paid the Cuckold's Point tosher £7 10s for the Parliament Houses bracelets; the lane was also HQ for the bone-grubbers."
+    },
+    {
+      "id": "rosemary-lane-scene",
+      "title": "A View in Rosemary-Lane",
+      "url": "https://www.gutenberg.org/files/60440/60440-h/images/image02.jpg",
+      "url_hires": "https://www.gutenberg.org/files/60440/60440-h/images/image02h.jpg",
+      "caption": "A VIEW IN ROSEMARY-LANE.",
+      "chapter_refs": ["02-bone-grubbers-and-rag-gatherers", "03-pure-finders"],
+      "character_refs": ["01-liverpool-bone-grubber", "03-pure-finder-widow"],
+      "description": "Street-scene in the \"wretched locality\" between the Docks and Rosemary Lane — the pure-finder widow's and the Liverpool bone-grubber's home ground."
+    }
+  ]
+}

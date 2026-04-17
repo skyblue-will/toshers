@@ -214,6 +214,7 @@ export function getMasterIndex() {
       cors: "Access-Control-Allow-Origin: * on all /api/** routes; safe to fetch from any browser origin.",
       rest: {
         master_index: "/api/index",
+        openapi: "/api/openapi.json",
         chapters_list: "/api/chapters",
         chapter: "/api/chapters/{id}",
         characters_list: "/api/characters",
@@ -223,6 +224,9 @@ export function getMasterIndex() {
         glossary_term: "/api/glossary/{term}",
         locations_list: "/api/locations",
         relationships_list: "/api/relationships",
+        quotes_list: "/api/quotes?speaker_id={id}&chapter_ref={id}&theme={t}&dialect_level={heavy|moderate|standard}",
+        illustrations_list: "/api/illustrations",
+        quiz_list: "/api/quiz?chapter_ref={id}&difficulty={easy|medium|hard}",
         price_normalize: "/api/prices/normalize?pounds={n}&shillings={n}&pence={n}",
         search: "/api/search?q={query}&limit={n}",
         semantic_search: "/api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}",

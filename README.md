@@ -29,12 +29,13 @@ Or via the CLI:
 claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp
 ```
 
-You'll get thirteen tools:
+You'll get sixteen tools plus five prompts:
 
 - **Catalogue** — `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character`
 - **Search** — `search` (exact-match substring), `semantic_search` (meaning-based via embeddings)
-- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `voice_profile`, `normalize_price`
+- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `voice_profile`, `list_quotes`, `list_illustrations`, `list_quiz`, `normalize_price`
 - **Citation** — `get_source_lines`
+- **Prompts** — `summarise_character_for_kids`, `narrate_character_in_voice`, `find_passages_on`, `map_tour`, `quiz_on`
 
 Call `get_index` first when you start a session — it returns the entire catalogue (plus `version` and git `commit` for cache invalidation) in one shot.
 
@@ -55,6 +56,10 @@ Call `get_index` first when you start a session — it returns the entire catalo
 | `GET /api/locations` | Structured geography — lat/lng + chapter + character refs for every named London place |
 | `GET /api/relationships` | Cross-reference graph — character edges to the people and institutions they mention |
 | `GET /api/prices/normalize?pounds={n}&shillings={n}&pence={n}` | Pre-decimal → decimal pounds → modern GBP (BoE CPI 1851→2024) |
+| `GET /api/quotes?speaker_id=&chapter_ref=&theme=&dialect_level=` | Canonical pulled-quotes — verbatim text, speaker, dialect level, TTS-normalised rendition |
+| `GET /api/illustrations` | Original 1861 Beard-daguerreotype plates with public-domain image URLs (Project Gutenberg) |
+| `GET /api/quiz?chapter_ref=&difficulty=` | Fact-check triples — question, answer, and `source.txt` citation |
+| `GET /api/openapi.json` | Full OpenAPI 3.1 spec for the REST surface — feed to an OpenAPI code generator for a typed client |
 | `GET /api/search?q={query}&limit={n}&context={n}` | **Substring** search across `source.txt` with line citations |
 | `GET /api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}` | **Semantic** search via embeddings (openai/text-embedding-3-small routed through Vercel AI Gateway + pgvector on Neon). Returns ranked hits with line citations and a `score` in 0–1. |
 | `GET /api/source?start={n}&end={m}` | Verbatim line range from `source.txt` (capped 500 lines; `?format=raw` for plain text) |

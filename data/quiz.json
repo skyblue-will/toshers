@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "description": "Canonical fact-check triples from the Mayhew extract — question, answer, and source.txt line citation. Intended for downstream quizzes, trivia tools, or answer-validation steps. Every answer is verifiable against the cited line range. Difficulty is a consumer hint, not a semantic guarantee.",
+  "entries": [
+    {
+      "id": "tosher-velveteen-coat",
+      "question": "What distinctive garment did the sewer-hunters (toshers) wear?",
+      "answer": "Long greasy velveteen coats with pockets of vast capacity.",
+      "citation": { "file": "source.txt", "source_lines": [1476, 1478] },
+      "difficulty": "easy",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "tosher-pole-length",
+      "question": "How long was the iron-hooked pole carried by a tosher?",
+      "answer": "Eight feet.",
+      "citation": { "file": "source.txt", "source_lines": [1479, 1492] },
+      "difficulty": "easy",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "tosher-twenty-years",
+      "question": "How long had the Cuckold's Point tosher worked the shore when Mayhew interviewed him?",
+      "answer": "More than twenty years.",
+      "citation": { "file": "source.txt", "source_lines": [1741, 1741] },
+      "difficulty": "easy",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "tosher-tide-window",
+      "question": "How many hours can a tosher work in the sewers before the tide forces them out?",
+      "answer": "Six or seven hours.",
+      "citation": { "file": "source.txt", "source_lines": [1812, 1814] },
+      "difficulty": "easy",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "tosher-blackfriars-penalty",
+      "question": "What was the penalty for being caught trespassing up the Blackfriars-Bridge city sewer?",
+      "answer": "Fourteen days (imposed by the Lord Mayor).",
+      "citation": { "file": "source.txt", "source_lines": [1771, 1773] },
+      "difficulty": "medium",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "tosher-parliament-fire",
+      "question": "Where was the rubbish from the 1834 Parliament Houses fire shot, and which tosher worked it?",
+      "answer": "It was shot in Hyde Park; the Cuckold's Point tosher and his mate Long J— worked it, making £3 each per day.",
+      "citation": { "file": "source.txt", "source_lines": [1825, 1829] },
+      "difficulty": "hard",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "pure-definition",
+      "question": "What is 'pure' in Mayhew's street-finder vocabulary?",
+      "answer": "Dogs' dung, collected from London streets and sold to the tanyards of Bermondsey for dressing leather.",
+      "citation": { "file": "source.txt", "source_lines": [16, 16] },
+      "difficulty": "medium",
+      "chapter_ref": "03-pure-finders"
+    },
+    {
+      "id": "pure-price-history",
+      "question": "How had the price of a pail of pure changed between the 1840s and 1851?",
+      "answer": "Down from 3s 6d–4s per pail-full to 1s–1s 2d per pail-full.",
+      "citation": { "file": "source.txt", "source_lines": [106, 110] },
+      "difficulty": "hard",
+      "chapter_ref": "03-pure-finders"
+    },
+    {
+      "id": "pure-widow-children",
+      "question": "How many children did the pure-finder widow bear, and how many survived?",
+      "answer": "She had eight children; none survived. Her daughter lived to 30 and died in childbirth.",
+      "citation": { "file": "source.txt", "source_lines": [117, 119] },
+      "difficulty": "medium",
+      "chapter_ref": "03-pure-finders"
+    },
+    {
+      "id": "widow-first-husband-ship",
+      "question": "What was the name of the ship on which the pure-finder widow's first husband drowned?",
+      "answer": "The Neptune, an East Indiaman bound for Bombay.",
+      "citation": { "file": "source.txt", "source_lines": [75, 80] },
+      "difficulty": "medium",
+      "chapter_ref": "03-pure-finders"
+    },
+    {
+      "id": "bone-grubber-count",
+      "question": "How many bone-grubbers and mud-larks did Mayhew estimate were active in London?",
+      "answer": "Between 800 and 1,000.",
+      "citation": { "file": "source.txt", "source_lines": [10, 18] },
+      "difficulty": "medium",
+      "chapter_ref": "01-overview-taxonomy"
+    },
+    {
+      "id": "liverpool-grubber-betrayal",
+      "question": "Which railway company cheated the Liverpool-Irish bone-grubber out of his savings?",
+      "answer": "He was working on the Paris and Rouen Railway under the contractors McKenzie & Brassy; the fraud happened when he returned to England.",
+      "citation": { "file": "source.txt", "source_lines": [455, 480] },
+      "difficulty": "hard",
+      "chapter_ref": "02-bone-grubbers-and-rag-gatherers"
+    },
+    {
+      "id": "mud-lark-age",
+      "question": "How old was the younger of the two mud-lark boys interviewed by Mayhew?",
+      "answer": "Seven years old.",
+      "citation": { "file": "source.txt", "source_lines": [2020, 2060] },
+      "difficulty": "easy",
+      "chapter_ref": "08-mud-larks"
+    },
+    {
+      "id": "jc-placement",
+      "question": "Where was J.C. placed as an apprentice after his rescue from the Old Gravel-lane mud-lark gang?",
+      "answer": "At Bradbury & Evans, the printers of Whitefriars (who printed Punch and much of Dickens).",
+      "citation": { "file": "source.txt", "source_lines": [2180, 2195] },
+      "difficulty": "hard",
+      "chapter_ref": "08-mud-larks"
+    },
+    {
+      "id": "dustman-wage",
+      "question": "What did the East-end dustman earn per day, in his own words?",
+      "answer": "About half-a-bull — that is, 2 shillings 6 pence — a day, taking one day with another.",
+      "citation": { "file": "source.txt", "source_lines": [4287, 4288] },
+      "difficulty": "medium",
+      "chapter_ref": "10-dustmen-of-london"
+    },
+    {
+      "id": "brieze-definition",
+      "question": "What is 'brieze' in the dust-yard economy?",
+      "answer": "The coarser portion of sifted house-dust (as opposed to the fine portion called 'soil'). Sold to brick-makers for firing bricks.",
+      "citation": { "file": "source.txt", "source_lines": [3403, 3405] },
+      "difficulty": "medium",
+      "chapter_ref": "10-dustmen-of-london"
+    },
+    {
+      "id": "dust-trade-profit",
+      "question": "What was the approximate annual profit of the entire London dust trade, per Mayhew?",
+      "answer": "About £72,300 — roughly 100% of the trade's expenditure. Capital ~£28,590; income ~£147,700.",
+      "citation": { "file": "source.txt", "source_lines": [3800, 3900] },
+      "difficulty": "hard",
+      "chapter_ref": "10-dustmen-of-london"
+    },
+    {
+      "id": "tanyards-bermondsey",
+      "question": "Which London district had the tanyards that bought the pure-finders' dogs' dung?",
+      "answer": "Bermondsey — named yards include Leomont & Roberts, Bavingtons, Beech, Murrell, Cheeseman, Powell, Jones, Jourdans, Kent, Moorcroft, Davis.",
+      "citation": { "file": "source.txt", "source_lines": [649, 680] },
+      "difficulty": "medium",
+      "chapter_ref": "03-pure-finders"
+    },
+    {
+      "id": "sewer-eaten-man",
+      "question": "How long before the interview (c. 1851) did the tosher remember the sewer-worker who was eaten by rats to the bones?",
+      "answer": "About twelve years earlier — placing the incident around 1839.",
+      "citation": { "file": "source.txt", "source_lines": [1801, 1806] },
+      "difficulty": "hard",
+      "chapter_ref": "07-sewer-hunters-toshers"
+    },
+    {
+      "id": "sall-disability",
+      "question": "What two disabilities did Sall, the dustman's common-law partner, work with?",
+      "answer": "She was deaf and nearly blind in one eye — the latter forced her off sifting onto the shovel.",
+      "citation": { "file": "source.txt", "source_lines": [4249, 4255] },
+      "difficulty": "medium",
+      "chapter_ref": "10-dustmen-of-london"
+    }
+  ]
+}
