@@ -203,6 +203,7 @@ export function getMasterIndex() {
         characters_list: "/api/characters",
         character: "/api/characters/{id}",
         search: "/api/search?q={query}&limit={n}",
+        semantic_search: "/api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}",
         source_lines: "/api/source?start={n}&end={m}",
       },
     },

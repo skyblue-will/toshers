@@ -9,6 +9,7 @@ import {
   listCharacters,
   search,
 } from "@/lib/content";
+import { semanticSearch } from "@/lib/semantic";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -107,7 +108,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "search",
-      "Case-insensitive substring search across the verbatim source.txt. Returns up to `limit` hits with line number, the matching line, and a few lines of surrounding context. Use this to find every mention of a place ('Bermondsey'), occupation ('rats'), institution ('workhouse'), or keyword. Hits include source line numbers so you can quote with citations.",
+      "Case-insensitive SUBSTRING search across the verbatim source.txt. Use this for EXACT-MATCH queries: place names ('Bermondsey'), slang ('tosh', 'brieze'), institutions ('workhouse'), numbers, quoted phrases. Returns line numbers, the matching line, and surrounding context. For concept-based queries (e.g. 'physical disability', 'fear of authority', 'children working at night'), use `semantic_search` instead.",
       {
         query: z.string().describe("Search term"),
         limit: z.number().int().positive().max(50).optional().describe("Max hits to return (default 10, max 50)"),
@@ -118,6 +119,38 @@ const handler = createMcpHandler(
           { type: "text", text: JSON.stringify(search(query, limit, context), null, 2) },
         ],
       }),
+    );
+
+    server.tool(
+      "semantic_search",
+      "Meaning-based (embedding) search across Mayhew's corpus. Use when you want passages by CONCEPT rather than exact wording — Mayhew often describes things without using the modern word for them (e.g. 'physical disability' returns his descriptions of the paralysed waterman, the lame grubber, the one-armed sifter, even though he never uses the word 'disability'). Returns ranked hits with source.txt line citations in the same shape as `search`, plus a `score` field (0–1, higher is more similar). The `kind` filter lets you restrict hits to the raw source, chapter summaries, or character testimonies. Use `search` for exact-match queries.",
+      {
+        query: z.string().describe("Natural-language query. Full phrases work better than single keywords."),
+        limit: z.number().int().positive().max(50).optional().describe("Max hits (default 10, max 50)"),
+        kind: z
+          .enum(["source", "chapter", "character"])
+          .optional()
+          .describe("Restrict to a single kind of document. Default: search all."),
+      },
+      async ({ query, limit = 10, kind }) => {
+        try {
+          const result = await semanticSearch(query, limit, kind);
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Semantic search failed: ${msg}\n\nFallback: use the \`search\` tool for substring matching.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      },
     );
 
     server.tool(
