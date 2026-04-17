@@ -40,7 +40,15 @@ export default function Home() {
 
       <section>
         <h2><span className="num">§ II.</span>For Claude Code &amp; other MCP-aware agents</h2>
-        <p>Add this to your <code>~/.claude/settings.json</code>:</p>
+        <p>Three install paths — pick the one that fits how you work.</p>
+
+        <h3>1. One-line CLI install (user-scoped, all your projects)</h3>
+        <pre><code>claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp</code></pre>
+
+        <h3>2. Drop a <code>.mcp.json</code> into any project (project-scoped, auto-discovered)</h3>
+        <p>One <code>curl</code> from inside the project — Claude Code finds it on the next <code>claude</code> run in that directory and the toshers tools are immediately available:</p>
+        <pre><code>curl -o .mcp.json https://toshers.vercel.app/mcp.json</code></pre>
+        <p>Or paste this manually as <code>.mcp.json</code> at the project root:</p>
         <pre><code>{`{
   "mcpServers": {
     "toshers": {
@@ -49,9 +57,11 @@ export default function Home() {
     }
   }
 }`}</code></pre>
-        <p>Or via the Claude Code CLI:</p>
-        <pre><code>claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp</code></pre>
-        <p>Once mounted, the agent gains eight tools:</p>
+
+        <h3>3. Edit your settings file by hand</h3>
+        <p>Add the <code>mcpServers</code> block above to <code>~/.claude/settings.json</code> (user-scoped) or <code>.claude/settings.json</code> (project-scoped, gitignored if you don&rsquo;t want to share).</p>
+
+        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains eight tools:</p>
         <div className="endpoint-grid">
           <div className="endpoint"><span className="method">tool</span><span className="path">get_index</span><span className="desc">Master catalogue — call first to orient</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_chapters</span><span className="desc">Lightweight chapter metadata only</span></div>

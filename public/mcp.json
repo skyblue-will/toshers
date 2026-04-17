@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "toshers": {
+      "type": "http",
+      "url": "https://toshers.vercel.app/api/mcp"
+    }
+  }
+}
