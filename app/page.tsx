@@ -51,14 +51,15 @@ export default function Home() {
 }`}</code></pre>
         <p>Or via the Claude Code CLI:</p>
         <pre><code>claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp</code></pre>
-        <p>Once mounted, the agent gains seven tools:</p>
+        <p>Once mounted, the agent gains eight tools:</p>
         <div className="endpoint-grid">
           <div className="endpoint"><span className="method">tool</span><span className="path">get_index</span><span className="desc">Master catalogue — call first to orient</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_chapters</span><span className="desc">Lightweight chapter metadata only</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_chapter(id)</span><span className="desc">Full chapter file by id</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_characters</span><span className="desc">Lightweight testimony metadata only</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_character(id)</span><span className="desc">Full first-person testimony by id</span></div>
-          <div className="endpoint"><span className="method">tool</span><span className="path">search(query, limit?, context?)</span><span className="desc">Full-text search over source.txt with line citations</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">search(query, limit?, context?)</span><span className="desc">Exact-match substring search with line citations</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">semantic_search(query, limit?, kind?)</span><span className="desc">Meaning-based search via embeddings — finds concepts Mayhew describes without naming</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_source_lines(start, end)</span><span className="desc">Verbatim slice from source.txt for citation-backed quoting</span></div>
         </div>
       </section>
@@ -72,7 +73,8 @@ export default function Home() {
           <div className="endpoint"><span className="method">GET</span><span className="path">/api/chapters/{`{id}`}</span><span className="desc">One chapter (append <code>?format=raw</code> for raw markdown)</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/characters">/api/characters</a></span><span className="desc">List all character testimonies with metadata</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path">/api/characters/{`{id}`}</span><span className="desc">One testimony (append <code>?format=raw</code> for raw markdown)</span></div>
-          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search?q=rats">/api/search?q={`{query}`}&amp;limit={`{n}`}</a></span><span className="desc">Search source.txt; returns line numbers, snippets, and surrounding context</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search?q=rats">/api/search?q={`{query}`}&amp;limit={`{n}`}</a></span><span className="desc">Exact-match substring search; returns line numbers, snippets, and surrounding context</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/search/semantic?q=physical+disability&limit=3">/api/search/semantic?q={`{query}`}&amp;limit={`{n}`}&amp;kind={`{source|chapter|character}`}</a></span><span className="desc">Meaning-based search via embeddings; returns ranked hits with citations (try it — finds passages by concept even when Mayhew never uses the modern word)</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/source?start=1722&end=1740">/api/source?start={`{n}`}&amp;end={`{m}`}</a></span><span className="desc">Verbatim line range (capped 500 lines; <code>?format=raw</code> for plain text)</span></div>
         </div>
       </section>

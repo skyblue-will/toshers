@@ -29,7 +29,9 @@ Or via the CLI:
 claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp
 ```
 
-You'll get seven tools: `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character`, `search`, `get_source_lines`. Call `get_index` first when you start a session — it returns the entire catalogue in one shot.
+You'll get eight tools: `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character`, `search` (exact-match substring), `semantic_search` (meaning-based via embeddings), `get_source_lines`. Call `get_index` first when you start a session — it returns the entire catalogue in one shot.
+
+**When to use which search.** `search` for exact-match queries — place names (`Bermondsey`), slang (`tosh`, `brieze`), institutions (`workhouse`), quoted phrases. `semantic_search` for concept queries — Mayhew describes many things without using the modern word (e.g. `"physical disability"` returns his passages on the paralysed waterman and the one-armed sifter even though he never writes "disability"; `"children working at night"` finds the mud-lark and dust-yard passages without depending on exact phrasing).
 
 ### Plain HTTP (any client)
 
@@ -40,7 +42,8 @@ You'll get seven tools: `get_index`, `list_chapters`, `get_chapter`, `list_chara
 | `GET /api/chapters/{id}` | One chapter (`?format=raw` for markdown) |
 | `GET /api/characters` | List of testimonies with metadata |
 | `GET /api/characters/{id}` | One testimony (`?format=raw` for markdown) |
-| `GET /api/search?q={query}&limit={n}&context={n}` | Substring search across `source.txt` with line citations |
+| `GET /api/search?q={query}&limit={n}&context={n}` | **Substring** search across `source.txt` with line citations |
+| `GET /api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}` | **Semantic** search via embeddings (openai/text-embedding-3-small routed through Vercel AI Gateway + pgvector on Neon). Returns ranked hits with line citations and a `score` in 0–1. |
 | `GET /api/source?start={n}&end={m}` | Verbatim line range from `source.txt` (capped 500 lines; `?format=raw` for plain text) |
 
 **Citation convention:** when quoting Mayhew, cite as `source.txt:1722-1856`. The line numbers are stable across the whole library.
@@ -124,6 +127,7 @@ The original is in the public domain.
 
 ```bash
 npm install
+vercel env pull .env.local        # pulls DATABASE_URL + AI_GATEWAY_API_KEY
 npm run build
 PORT=3741 npm start
 # REST:  http://localhost:3741/api/index
@@ -132,12 +136,29 @@ PORT=3741 npm start
 
 For the dev server: `npm run dev` (defaults to port 3000).
 
+### Reindexing the semantic search corpus
+
+The `chunks` table on Neon holds paragraph-level embeddings of `source.txt` and the chapter/character bodies. If you ever edit the source material, rebuild:
+
+```bash
+# First time only — apply the pgvector schema to Neon
+npm run db:migrate
+
+# Incremental: only re-embeds chunks whose content_hash changed
+npm run index
+
+# Nuke and pave: TRUNCATE chunks, then reindex everything
+npm run index:rebuild
+```
+
+Full reindex is ~305 chunks, ~157k tokens, ~$0.003, ~15 seconds. Uses `openai/text-embedding-3-small` (1536-d) routed through Vercel AI Gateway. Per-query cost at runtime is ~$2e-7.
+
 ## Infrastructure
 
-- **Stack:** Next.js 15 App Router, React 19, TypeScript, [`mcp-handler`](https://www.npmjs.com/package/mcp-handler) for the MCP transport.
-- **Hosting:** [Vercel](https://vercel.com) (Fluid Compute, Node.js runtime). Deploys on push to `main`.
-- **Database:** [Neon](https://neon.tech) (provisioned via Vercel Marketplace, currently unused — available for v2 if we layer derived data, character profiles, or analytics on top).
-- **Data layer:** All markdown files are read into memory at module init (cold start cost ≈ negligible for ~100kb of text), so request paths are pure compute.
+- **Stack:** Next.js 15 App Router, React 19, TypeScript, [`mcp-handler`](https://www.npmjs.com/package/mcp-handler) for the MCP transport, [`@neondatabase/serverless`](https://www.npmjs.com/package/@neondatabase/serverless) HTTP driver, [`ai`](https://www.npmjs.com/package/ai) SDK for embedding calls via Vercel AI Gateway.
+- **Hosting:** [Vercel](https://vercel.com) (Fluid Compute, Node.js runtime). Deploys via `vercel deploy --prod` (GitHub auto-deploy not yet connected).
+- **Database:** [Neon](https://neon.tech) (Vercel Marketplace). Holds the `chunks` table for semantic search — pgvector + HNSW index. Everything else reads from markdown files on disk at module init.
+- **Data layer:** Markdown files are read into memory at module init (cold start cost ≈ negligible for ~100kb of text), so most request paths are pure compute. The semantic-search path additionally makes one embedding API call + one Neon query per request.
 
 ```bash
 # Dev workflow
