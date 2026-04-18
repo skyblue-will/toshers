@@ -157,9 +157,23 @@
     "/api/relationships": {
       "get": {
         "tags": ["synthesis"],
-        "summary": "Cross-reference graph",
+        "summary": "Cross-reference graph (character → mentioned)",
         "responses": {
           "200": { "description": "Relationships", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Relationships" } } } }
+        }
+      }
+    },
+    "/api/relationships/mentions": {
+      "get": {
+        "tags": ["synthesis"],
+        "summary": "Reverse lookup — find edges pointing AT a given person, place, or institution",
+        "description": "Case-insensitive substring match against each edge's `to.label` and `to.id`. Answers questions `/api/relationships` can't: 'who mentions Long J——?', 'which characters reference Bermondsey?'.",
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Name or label fragment, e.g. 'Long J', 'Bermondsey', 'Bradbury'" }
+        ],
+        "responses": {
+          "200": { "description": "Matching edges", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MentionsResult" } } } },
+          "400": { "description": "Missing 'q' query parameter" }
         }
       }
     },
@@ -203,7 +217,8 @@
     "/api/prices/normalize": {
       "get": {
         "tags": ["synthesis"],
-        "summary": "Pre-decimal £/s/d → modern GBP (BoE CPI)",
+        "summary": "Pre-decimal £/s/d → modern GBP on four economic bases",
+        "description": "Returns real_price (CPI), labour_value (avg earnings), income_value (GDP per capita), and economic_share (GDP share). These differ by an order of magnitude — use the one appropriate to what you are comparing (consumer goods vs. wages vs. industry totals).",
         "parameters": [
           { "name": "pounds", "in": "query", "schema": { "type": "number", "minimum": 0 } },
           { "name": "shillings", "in": "query", "schema": { "type": "number", "minimum": 0 } },
@@ -488,8 +503,22 @@
           "entries": { "type": "array", "items": { "$ref": "#/components/schemas/QuizEntry" } }
         }
       },
+      "BasisResult": {
+        "type": "object",
+        "required": ["key", "label", "modern_gbp_approx", "multiplier", "endpoint_year", "description", "source"],
+        "properties": {
+          "key": { "type": "string", "enum": ["real_price", "labour_value", "income_value", "economic_share"] },
+          "label": { "type": "string" },
+          "modern_gbp_approx": { "type": "number" },
+          "multiplier": { "type": "number" },
+          "endpoint_year": { "type": "integer" },
+          "description": { "type": "string" },
+          "source": { "type": "string" }
+        }
+      },
       "NormalizedPrice": {
         "type": "object",
+        "required": ["input", "decimal_pounds_1851", "bases", "modern_gbp_approx", "basis", "basis_source", "note"],
         "properties": {
           "input": {
             "type": "object",
@@ -500,10 +529,32 @@
             }
           },
           "decimal_pounds_1851": { "type": "number" },
-          "modern_gbp_approx": { "type": "number" },
-          "basis": { "type": "string" },
-          "basis_source": { "type": "string" },
+          "bases": {
+            "type": "array",
+            "description": "Four parallel modern-GBP equivalents on different economic bases.",
+            "items": { "$ref": "#/components/schemas/BasisResult" }
+          },
+          "modern_gbp_approx": { "type": "number", "description": "Back-compat alias for bases[real_price].modern_gbp_approx." },
+          "basis": { "type": "string", "description": "Back-compat alias for bases[real_price].label." },
+          "basis_source": { "type": "string", "description": "Back-compat alias for bases[real_price].source." },
           "note": { "type": "string" }
+        }
+      },
+      "MentionHit": {
+        "type": "object",
+        "required": ["edge", "matched_on"],
+        "properties": {
+          "edge": { "$ref": "#/components/schemas/RelationshipEdge" },
+          "matched_on": { "type": "string", "enum": ["to.id", "to.label"] }
+        }
+      },
+      "MentionsResult": {
+        "type": "object",
+        "required": ["query", "hits", "total"],
+        "properties": {
+          "query": { "type": "string" },
+          "hits": { "type": "array", "items": { "$ref": "#/components/schemas/MentionHit" } },
+          "total": { "type": "integer" }
         }
       },
       "SearchHit": {

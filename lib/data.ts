@@ -92,6 +92,34 @@ export function listRelationships(): Relationships {
   return RELATIONSHIPS;
 }
 
+export type MentionHit = {
+  edge: RelationshipEdge;
+  matched_on: "to.id" | "to.label";
+};
+
+export function findMentionsOf(query: string): {
+  query: string;
+  hits: MentionHit[];
+  total: number;
+} {
+  const q = query.trim().toLowerCase();
+  if (!q) return { query, hits: [], total: 0 };
+
+  const hits: MentionHit[] = [];
+  for (const edge of RELATIONSHIPS.edges) {
+    const toId = edge.to.id?.toLowerCase() ?? "";
+    const toLabel = edge.to.label.toLowerCase();
+    if (toId && toId.includes(q)) {
+      hits.push({ edge, matched_on: "to.id" });
+      continue;
+    }
+    if (toLabel.includes(q)) {
+      hits.push({ edge, matched_on: "to.label" });
+    }
+  }
+  return { query: q, hits, total: hits.length };
+}
+
 // ---------- Quotes ----------
 
 export type QuoteEntry = {

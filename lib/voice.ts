@@ -19,6 +19,13 @@ export type VoiceProfile = {
 // Keep this concise; it's a hint for TTS / voice-casting consumers, not a
 // full linguistic analysis.
 const OVERRIDES: Record<string, Partial<VoiceProfile>> = {
+  mayhew: {
+    gender: "male",
+    dialect_level: "standard",
+    accent_hint: "Educated middle-class London, mid-19th-century (Westminster School, barrister's training, Punch-era literary-journalist register)",
+    speech_notes:
+      "The narrator voice. Orotund periodic Victorian prose, taxonomic enumeration, statistical aside, sympathetic-but-distanced reportage. Use for the framing narrator in any audio adaptation — NOT for quoted testimony, which should route to the interviewee's voice profile. Contrasts sharply with the heavy dialect of 06-cuckolds-point-tosher and 10-dustman-and-sall, which he preserves verbatim within his own standard-English frame.",
+  },
   "01-liverpool-bone-grubber": {
     gender: "male",
     dialect_level: "moderate",

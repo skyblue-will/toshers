@@ -34,6 +34,12 @@ The frontmatter is the only interpretive layer; everything below the `---` closi
 |---|------|----------|
 | 11 | [11-minor-voices-and-scenes.md](11-minor-voices-and-scenes.md) | Six shorter vignettes: the abandoned-house grubber; the prison-preferring mud-lark; the notebook-fleeing dustman; the callous dust-contractor; the Essex farmhand dustman; the intelligent dustman's weekly perquisites record |
 
+## The narrator
+
+| # | File | Contents |
+|---|------|----------|
+| — | [mayhew.md](mayhew.md) | **Henry Mayhew** (1812-1887) — dossier on the narrator himself: biography, method, class position, editorial voice, authorial biases visible in the extract, and representative source.txt passages. Separate from the testimony files because he is the frame around all of them rather than one of them. |
+
 ## Quick-reference character map
 
 ### By archetype

@@ -11,6 +11,7 @@ import {
 } from "@/lib/content";
 import { semanticSearch } from "@/lib/semantic";
 import {
+  findMentionsOf,
   getGlossaryTerm,
   listGlossary,
   listIllustrations,
@@ -229,10 +230,27 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_relationships",
-      "Cross-reference graph — edges between canonical character voices and the people/institutions they mention (Long J—— the tosher's rival; Sall the dustman's partner; Bradbury & Evans the printers; Mr Brown the missing-heir pure-finder). Use for dramatis personae, NPC scaffolding, or relationship visualisations.",
+      "Cross-reference graph — edges between canonical character voices and the people/institutions they mention (Long J—— the tosher's rival; Sall the dustman's partner; Bradbury & Evans the printers; Mr Brown the missing-heir pure-finder). Edges run character → mentioned. For the reverse direction (\"who mentions Long J——?\", \"what edges touch Bermondsey?\"), use `get_mentions_of`. Use for dramatis personae, NPC scaffolding, or relationship visualisations.",
       {},
       async () => ({
         content: [{ type: "text", text: JSON.stringify(listRelationships(), null, 2) }],
+      }),
+    );
+
+    server.tool(
+      "get_mentions_of",
+      "Reverse lookup on the relationship graph: find every edge that POINTS AT a given person, place, or institution (case-insensitive substring match against the target's label and id). Answers questions `list_relationships` can't — 'who mentions Long J——?', 'which characters reference Bermondsey?', 'what edges touch Bradbury & Evans?'. Returns matching edges with the source character, relationship type, description, and source_lines citation. Use with a specific name fragment — 'Long J' or 'Bermondsey' — not a whole sentence.",
+      {
+        query: z
+          .string()
+          .describe(
+            "Name or label fragment to search for in edge targets, e.g. 'Long J', 'Bermondsey', 'Bradbury', 'rats'.",
+          ),
+      },
+      async ({ query }) => ({
+        content: [
+          { type: "text", text: JSON.stringify(findMentionsOf(query), null, 2) },
+        ],
       }),
     );
 
@@ -265,7 +283,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "normalize_price",
-      "Converts a pre-decimal British amount (£/s/d — pounds, shillings, pence) into decimal 1851 pounds and an approximate modern-GBP purchasing-power equivalent via the Bank of England CPI 1851→2024 inflator. Use this whenever Mayhew quotes a price or wage — e.g. `normalize_price({pounds: 3, shillings: 5})` for the tosher's Bishop Bonner's-fields haul. Returned `basis` field names the conversion source.",
+      "Converts a pre-decimal British amount (£/s/d — pounds, shillings, pence) into decimal 1851 pounds and returns FOUR modern-GBP equivalents on different economic bases: real_price (CPI, for consumer goods), labour_value (average earnings, for wages), income_value (GDP per capita, for personal income/status), and economic_share (GDP share, for industry totals and public budgets). These can differ by an ORDER OF MAGNITUDE — the dust trade's £148,000/year is ~£22M on CPI but ~£1.15B on GDP-share. Use real_price for individual goods, labour_value for wages/worker income, economic_share for large aggregate sums. Response includes per-basis multiplier, endpoint year, and source. Top-level `modern_gbp_approx` and `basis` aliases preserved for back-compat (they mirror real_price).",
       {
         pounds: z.number().min(0).optional().describe("Pounds (£). Default 0."),
         shillings: z.number().min(0).optional().describe("Shillings (s). 20 per pound. Default 0."),

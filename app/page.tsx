@@ -61,7 +61,7 @@ export default function Home() {
         <h3>3. Edit your settings file by hand</h3>
         <p>Add the <code>mcpServers</code> block above to <code>~/.claude/settings.json</code> (user-scoped) or <code>.claude/settings.json</code> (project-scoped, gitignored if you don&rsquo;t want to share).</p>
 
-        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains sixteen tools plus five prompts:</p>
+        <p style={{marginTop: '1.5rem'}}>Once mounted, the agent gains seventeen tools plus five prompts:</p>
         <div className="endpoint-grid">
           <div className="endpoint"><span className="method">tool</span><span className="path">get_index</span><span className="desc">Master catalogue — call first to orient. Returns version + git commit for cache invalidation</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_chapters</span><span className="desc">Lightweight chapter metadata only</span></div>
@@ -74,11 +74,12 @@ export default function Home() {
           <div className="endpoint"><span className="method">tool</span><span className="path">get_glossary_term(term)</span><span className="desc">One glossary entry with chapter and line citations</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_locations</span><span className="desc">London geography with lat/lng coords for map-pinning</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_relationships</span><span className="desc">Cross-reference graph — character edges to mentioned people and institutions</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">get_mentions_of(query)</span><span className="desc">Reverse graph lookup — every edge pointing AT a name, place, or institution</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">voice_profile(id)</span><span className="desc">TTS/voice-casting profile per character — dialect level, accent hint, speech notes</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_quotes(speaker_id?, chapter_ref?, theme?, dialect_level?)</span><span className="desc">Verbatim pulled-quotes with dialect level + TTS-normalised rendition</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_illustrations</span><span className="desc">17 Beard-daguerreotype plates with PD Gutenberg image URLs</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">list_quiz(chapter_ref?, difficulty?)</span><span className="desc">Canonical fact-check triples — question, answer, source.txt citation</span></div>
-          <div className="endpoint"><span className="method">tool</span><span className="path">normalize_price(pounds, shillings, pence)</span><span className="desc">Pre-decimal £/s/d → decimal → modern GBP via BoE CPI 1851→2024</span></div>
+          <div className="endpoint"><span className="method">tool</span><span className="path">normalize_price(pounds, shillings, pence)</span><span className="desc">Pre-decimal £/s/d → decimal 1851 pounds → four modern-GBP equivalents (CPI, labour value, income value, GDP share). They can differ by an order of magnitude — use the right one for what you are comparing.</span></div>
           <div className="endpoint"><span className="method">tool</span><span className="path">get_source_lines(start, end)</span><span className="desc">Verbatim slice from source.txt for citation-backed quoting</span></div>
           <div className="endpoint"><span className="method">prompt</span><span className="path">summarise_character_for_kids(character_id)</span><span className="desc">Age-10+ summary of a testimony, drawn from the source file</span></div>
           <div className="endpoint"><span className="method">prompt</span><span className="path">narrate_character_in_voice(character_id, length?)</span><span className="desc">First-person monologue in the character's own dialect</span></div>
@@ -102,7 +103,8 @@ export default function Home() {
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/glossary/tosh">/api/glossary/{`{term}`}</a></span><span className="desc">One glossary entry</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/locations">/api/locations</a></span><span className="desc">Structured London geography with modern lat/lng coords, chapter and character refs</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/relationships">/api/relationships</a></span><span className="desc">Cross-reference graph — character edges to mentioned people and institutions</span></div>
-          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/prices/normalize?pounds=3&shillings=5">/api/prices/normalize?pounds={`{n}`}&amp;shillings={`{n}`}&amp;pence={`{n}`}</a></span><span className="desc">Pre-decimal £/s/d → decimal pounds → modern GBP via BoE CPI 1851→2024</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/relationships/mentions?q=Long+J">/api/relationships/mentions?q={`{name}`}</a></span><span className="desc">Reverse lookup — every edge pointing AT a person, place, or institution (substring match)</span></div>
+          <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/prices/normalize?pounds=3&shillings=5">/api/prices/normalize?pounds={`{n}`}&amp;shillings={`{n}`}&amp;pence={`{n}`}</a></span><span className="desc">Pre-decimal £/s/d → decimal 1851 pounds → four modern-GBP equivalents (CPI, labour value, income value, GDP share) — an order of magnitude apart; pick the right basis</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/quotes">/api/quotes</a></span><span className="desc">Canonical pulled-quotes with dialect level and TTS-normalised rendition. Filter by <code>?speaker_id=</code>, <code>?chapter_ref=</code>, <code>?theme=</code>, <code>?dialect_level=</code></span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/illustrations">/api/illustrations</a></span><span className="desc">17 original 1861 plates with public-domain image URLs (Project Gutenberg)</span></div>
           <div className="endpoint"><span className="method">GET</span><span className="path"><a href="/api/quiz">/api/quiz</a></span><span className="desc">Canonical fact-check triples. Filter by <code>?chapter_ref=</code> or <code>?difficulty=easy|medium|hard</code></span></div>
@@ -131,23 +133,26 @@ export default function Home() {
       </section>
 
       <section>
-        <h2><span className="num">§ V.</span>The 11 voices</h2>
+        <h2><span className="num">§ V.</span>The 11 voices (plus the narrator)</h2>
         <div className="catalogue">
-          {characters.map((c) => (
-            <div className="catalogue-row" key={c.id}>
-              <span className="num">{c.id.slice(0, 2)}</span>
-              <div>
-                <div className="title">
-                  <a href={`/api/characters/${c.id}?format=raw`}>{c.label}</a>
-                </div>
-                <div className="hook">
-                  {c.occupation ? `${c.occupation}` : ""}
-                  {c.age_stated ? ` · ${c.age_stated}` : ""}
-                  {c.origin ? ` · ${c.origin}` : ""}
+          {characters.map((c) => {
+            const isNumbered = /^\d{2}-/.test(c.id);
+            return (
+              <div className="catalogue-row" key={c.id}>
+                <span className="num">{isNumbered ? c.id.slice(0, 2) : "—"}</span>
+                <div>
+                  <div className="title">
+                    <a href={`/api/characters/${c.id}?format=raw`}>{c.label}</a>
+                  </div>
+                  <div className="hook">
+                    {c.occupation ? `${c.occupation}` : ""}
+                    {c.age_stated ? ` · ${c.age_stated}` : ""}
+                    {c.origin ? ` · ${c.origin}` : ""}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

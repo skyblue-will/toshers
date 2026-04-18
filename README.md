@@ -29,12 +29,12 @@ Or via the CLI:
 claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp
 ```
 
-You'll get sixteen tools plus five prompts:
+You'll get seventeen tools plus five prompts:
 
-- **Catalogue** — `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character`
+- **Catalogue** — `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character` (includes `mayhew` — a dossier on the narrator himself)
 - **Search** — `search` (exact-match substring), `semantic_search` (meaning-based via embeddings)
-- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `voice_profile`, `list_quotes`, `list_illustrations`, `list_quiz`, `normalize_price`
-- **Citation** — `get_source_lines`
+- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `get_mentions_of` (reverse graph lookup), `voice_profile`, `list_quotes`, `list_illustrations`, `list_quiz`, `normalize_price` (four economic bases: CPI, labour value, income value, GDP share)
+- **Citation** — `get_source_lines` (verbatim slice by line range — use for precise quoting without fetching whole dossiers)
 - **Prompts** — `summarise_character_for_kids`, `narrate_character_in_voice`, `find_passages_on`, `map_tour`, `quiz_on`
 
 Call `get_index` first when you start a session — it returns the entire catalogue (plus `version` and git `commit` for cache invalidation) in one shot.
@@ -55,7 +55,8 @@ Call `get_index` first when you start a session — it returns the entire catalo
 | `GET /api/glossary/{term}` | One glossary entry |
 | `GET /api/locations` | Structured geography — lat/lng + chapter + character refs for every named London place |
 | `GET /api/relationships` | Cross-reference graph — character edges to the people and institutions they mention |
-| `GET /api/prices/normalize?pounds={n}&shillings={n}&pence={n}` | Pre-decimal → decimal pounds → modern GBP (BoE CPI 1851→2024) |
+| `GET /api/relationships/mentions?q={name}` | Reverse graph lookup — every edge pointing AT a person, place, or institution (substring-match) |
+| `GET /api/prices/normalize?pounds={n}&shillings={n}&pence={n}` | Pre-decimal → decimal 1851 pounds → modern GBP on four economic bases (real_price / labour_value / income_value / economic_share). These can differ by an order of magnitude — use the one appropriate to what you are comparing. |
 | `GET /api/quotes?speaker_id=&chapter_ref=&theme=&dialect_level=` | Canonical pulled-quotes — verbatim text, speaker, dialect level, TTS-normalised rendition |
 | `GET /api/illustrations` | Original 1861 Beard-daguerreotype plates with public-domain image URLs (Project Gutenberg) |
 | `GET /api/quiz?chapter_ref=&difficulty=` | Fact-check triples — question, answer, and `source.txt` citation |
