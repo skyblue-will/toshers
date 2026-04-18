@@ -135,14 +135,34 @@ export type QuoteEntry = {
   context: string;
 };
 
+export type QuoteCoverage = {
+  curated_count: number;
+  total_curated: number;
+  policy: string;
+  exhaustive: boolean;
+};
+
 export type Quotes = {
   version: number;
   description: string;
   dialect_levels: Record<string, string>;
   entries: QuoteEntry[];
+  coverage: QuoteCoverage;
 };
 
-const QUOTES: Quotes = loadJson<Quotes>("quotes.json");
+const QUOTES_RAW: Omit<Quotes, "coverage"> = loadJson<Omit<Quotes, "coverage">>("quotes.json");
+
+const QUOTE_POLICY =
+  "Curated, NOT exhaustive. The entries are a hand-picked selection of quotable lines — ~21 quotes across ~47,000 words of source. Mayhew's corpus contains many hundreds of additional quotable lines that aren't in this list; when you need quotes beyond this selection, call get_source_lines or search directly against source.txt. `exhaustive: false` always — do not treat this as the complete set.";
+
+function coverageFor(filtered: QuoteEntry[]): QuoteCoverage {
+  return {
+    curated_count: filtered.length,
+    total_curated: QUOTES_RAW.entries.length,
+    policy: QUOTE_POLICY,
+    exhaustive: false,
+  };
+}
 
 export function listQuotes(filter?: {
   speaker_id?: string;
@@ -150,7 +170,7 @@ export function listQuotes(filter?: {
   theme?: string;
   dialect_level?: string;
 }): Quotes {
-  let entries = QUOTES.entries;
+  let entries = QUOTES_RAW.entries;
   if (filter?.speaker_id) {
     entries = entries.filter((e) => e.speaker_id === filter.speaker_id);
   }
@@ -163,7 +183,7 @@ export function listQuotes(filter?: {
   if (filter?.dialect_level) {
     entries = entries.filter((e) => e.dialect_level === filter.dialect_level);
   }
-  return { ...QUOTES, entries };
+  return { ...QUOTES_RAW, entries, coverage: coverageFor(entries) };
 }
 
 // ---------- Illustrations ----------

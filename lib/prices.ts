@@ -91,6 +91,70 @@ export type PriceInput = {
   pence?: number;
 };
 
+// Parse a pre-decimal string like "£12 15s", "6d", "£3. 5s. 6d.", "3l. 5s.",
+// "30s", "2s 6d", "£148,000" into {pounds, shillings, pence}. Throws if the
+// string doesn't parse as a single price.
+//
+// Handled notations: £ or l. for pounds (l. is Mayhew's statistical-table
+// convention, libra); s/s. for shillings; d/d. for pence; commas in pound
+// values; whitespace and periods between components.
+export function parsePriceLiteral(literal: string): PriceInput {
+  const raw = literal.trim();
+  if (!raw) throw new Error("Empty price literal");
+
+  // Three-part: £N Ns Nd (also l. notation)
+  const three = raw.match(
+    /^(?:£|)(\d{1,3}(?:,\d{3})*)l?\.?\s*(\d+)s\.?\s*(\d+)d\.?$/i,
+  );
+  if (three) {
+    return {
+      pounds: Number(three[1].replace(/,/g, "")),
+      shillings: Number(three[2]),
+      pence: Number(three[3]),
+    };
+  }
+
+  // Two-part £N Ns
+  const twoPoundsShillings = raw.match(
+    /^(?:£|)(\d{1,3}(?:,\d{3})*)l?\.?\s*(\d+)s\.?$/i,
+  );
+  if (twoPoundsShillings) {
+    return {
+      pounds: Number(twoPoundsShillings[1].replace(/,/g, "")),
+      shillings: Number(twoPoundsShillings[2]),
+    };
+  }
+
+  // Two-part Ns Nd
+  const twoShillingsPence = raw.match(/^(\d+)s\.?\s*(\d+)d\.?$/i);
+  if (twoShillingsPence) {
+    return {
+      shillings: Number(twoShillingsPence[1]),
+      pence: Number(twoShillingsPence[2]),
+    };
+  }
+
+  // Pounds alone (£N or Nl.)
+  const pounds = raw.match(/^(?:£(\d{1,3}(?:,\d{3})*)|(\d{1,3}(?:,\d{3})*)l\.?)$/i);
+  if (pounds) {
+    return {
+      pounds: Number((pounds[1] ?? pounds[2]).replace(/,/g, "")),
+    };
+  }
+
+  // Shillings alone
+  const shillings = raw.match(/^(\d+)s\.?$/i);
+  if (shillings) return { shillings: Number(shillings[1]) };
+
+  // Pence alone
+  const pence = raw.match(/^(\d+)d\.?$/i);
+  if (pence) return { pence: Number(pence[1]) };
+
+  throw new Error(
+    `Could not parse price literal: ${JSON.stringify(literal)}. Expected forms: "£3 5s 6d", "£12 15s", "5s 6d", "£148,000", "30s", "6d", or l. notation ("3l. 5s. 6d.").`,
+  );
+}
+
 export type BasisResult = {
   key: string;
   label: string;

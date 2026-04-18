@@ -190,11 +190,31 @@ export function search(
   return { query: q, hits, total_matches: total };
 }
 
-export function getMasterIndex() {
+export type IndexDepth = "shallow" | "full";
+
+// Shallow index ≈ 2kb, full index ≈ 16kb. Shallow drops INDEX.md contents,
+// game_hooks / key_facts metadata on each character, and per-chapter
+// frontmatter detail — it returns only the tuples needed to resolve further
+// calls. Use it when the consumer wants titles and ids, not dossiers.
+function shallowChapterMeta(c: ChapterMeta) {
+  return { id: c.id, title: c.title, hook: c.hook, source_lines: c.source_lines };
+}
+function shallowCharacterMeta(c: CharacterMeta) {
   return {
+    id: c.id,
+    label: c.label,
+    occupation: c.occupation,
+    age_stated: c.age_stated,
+    dialect_level: c.dialect_level,
+  };
+}
+
+export function getMasterIndex(depth: IndexDepth = "full") {
+  const base = {
     version: PACKAGE_JSON.version ?? null,
     commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
     ref: process.env.VERCEL_GIT_COMMIT_REF ?? null,
+    depth,
     source: {
       file: "source.txt",
       total_lines: SOURCE_LINES.length,
@@ -202,6 +222,29 @@ export function getMasterIndex() {
       description:
         "Henry Mayhew, London Labour and the London Poor, Vol. II (1851) — extract on London street-finders and street-collectors.",
     },
+    id_scheme: {
+      chapters:
+        "Two-digit prefix tracks chapter order in the 1861 Vol. II extract (01–11). Matches source/INDEX.md.",
+      characters:
+        "Two-digit prefix tracks character-catalogue order (01–11), NOT the chapter the voice appears in — e.g. 06-cuckolds-point-tosher is in chapter 07. `mayhew` is unnumbered because he is the narrator of the whole extract, not a testimony subject.",
+    },
+  };
+
+  if (depth === "shallow") {
+    return {
+      ...base,
+      chapters: listChapters().map(shallowChapterMeta),
+      characters: listCharacters().map(shallowCharacterMeta),
+      api: {
+        docs: "/",
+        mcp_endpoint: "/api/mcp",
+        hint: "Call get_index with depth='full' for chapter/character frontmatter, INDEX.md contents, and the full REST surface map.",
+      },
+    };
+  }
+
+  return {
+    ...base,
     chapters: listChapters(),
     characters: listCharacters(),
     indexes: {
@@ -213,25 +256,51 @@ export function getMasterIndex() {
       mcp_endpoint: "/api/mcp",
       cors: "Access-Control-Allow-Origin: * on all /api/** routes; safe to fetch from any browser origin.",
       rest: {
-        master_index: "/api/index",
+        master_index: "/api/index (?depth=shallow for a lean ~2kb variant)",
         openapi: "/api/openapi.json",
         chapters_list: "/api/chapters",
-        chapter: "/api/chapters/{id}",
+        chapter: "/api/chapters/{id} (?profile=minimal|facts|full)",
+        chapter_annotated: "/api/chapters/{id}/annotated",
         characters_list: "/api/characters",
-        character: "/api/characters/{id}",
+        character: "/api/characters/{id} (?profile=minimal|facts|full)",
+        character_annotated: "/api/characters/{id}/annotated",
         character_voice: "/api/characters/{id}/voice",
         glossary_list: "/api/glossary",
         glossary_term: "/api/glossary/{term}",
         locations_list: "/api/locations",
         relationships_list: "/api/relationships",
+        relationships_mentions: "/api/relationships/mentions?q={name}",
         quotes_list: "/api/quotes?speaker_id={id}&chapter_ref={id}&theme={t}&dialect_level={heavy|moderate|standard}",
         illustrations_list: "/api/illustrations",
         quiz_list: "/api/quiz?chapter_ref={id}&difficulty={easy|medium|hard}",
-        price_normalize: "/api/prices/normalize?pounds={n}&shillings={n}&pence={n}",
+        price_normalize: "/api/prices/normalize?pounds={n}&shillings={n}&pence={n} (or ?literal=£3+5s+6d)",
         search: "/api/search?q={query}&limit={n}",
         semantic_search: "/api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}",
         source_lines: "/api/source?start={n}&end={m}",
       },
     },
   };
+}
+
+// Apply a `profile` filter to a character/chapter meta record. Strips the
+// heaviest interpretive fields when callers only want facts.
+export type Profile = "minimal" | "facts" | "full";
+
+export function applyProfile(
+  meta: Record<string, unknown>,
+  profile: Profile,
+): Record<string, unknown> {
+  if (profile === "full") return meta;
+  const out: Record<string, unknown> = {};
+  const keep =
+    profile === "minimal"
+      ? new Set(["id", "label", "title", "occupation", "chapter", "source_lines", "hook", "age_stated", "origin", "dialect_level"])
+      : // "facts" = everything except game_hooks
+        null;
+  for (const [k, v] of Object.entries(meta)) {
+    if (profile === "facts" && k === "game_hooks") continue;
+    if (profile === "minimal" && keep && !keep.has(k)) continue;
+    out[k] = v;
+  }
+  return out;
 }

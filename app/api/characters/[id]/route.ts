@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
-import { getCharacter } from "@/lib/content";
+import { applyProfile, getCharacter, type Profile } from "@/lib/content";
 
 export const runtime = "nodejs";
+
+function parseProfile(raw: string | null): Profile {
+  if (raw === "minimal") return "minimal";
+  if (raw === "facts") return "facts";
+  return "full";
+}
 
 export async function GET(
   req: Request,
@@ -18,6 +24,7 @@ export async function GET(
 
   const url = new URL(req.url);
   const format = url.searchParams.get("format");
+  const profile = parseProfile(url.searchParams.get("profile"));
 
   if (format === "raw") {
     return new Response(character.raw, {
@@ -28,14 +35,19 @@ export async function GET(
     });
   }
 
-  const meta = character.meta as Record<string, unknown>;
+  const meta = applyProfile(
+    character.meta as Record<string, unknown>,
+    profile,
+  );
+  const sourceLines = (character.meta as Record<string, unknown>).source_lines;
   return NextResponse.json(
     {
       id,
       url: `/api/characters/${id}`,
-      source_lines: meta.source_lines ? String(meta.source_lines) : null,
+      profile,
+      source_lines: sourceLines ? String(sourceLines) : null,
       meta,
-      body: character.body,
+      body: profile === "minimal" ? null : character.body,
     },
     { headers: { "cache-control": "public, max-age=300, s-maxage=3600" } },
   );

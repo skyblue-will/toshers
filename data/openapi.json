@@ -23,7 +23,10 @@
       "get": {
         "tags": ["catalogue"],
         "summary": "Master catalogue",
-        "description": "Returns source metadata, all chapter summaries, all character summaries, INDEX.md contents, version, and git commit. Call this once at session start.",
+        "description": "Returns source metadata, all chapter summaries, all character summaries, INDEX.md contents, version, and git commit. Call this once at session start. Add ?depth=shallow for a ~2kb navigation-only variant (ids + titles/labels only, no INDEX.md, no game_hooks).",
+        "parameters": [
+          { "name": "depth", "in": "query", "schema": { "type": "string", "enum": ["shallow", "full"], "default": "full" }, "description": "'shallow' returns ids + titles + the REST map (~2kb). 'full' returns the complete catalogue (~16kb)." }
+        ],
         "responses": {
           "200": {
             "description": "Master catalogue",
@@ -59,7 +62,8 @@
         "summary": "One chapter",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] }, "description": "If 'raw', returns the full markdown file as text/markdown" }
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] }, "description": "If 'raw', returns the full markdown file as text/markdown" },
+          { "name": "profile", "in": "query", "schema": { "type": "string", "enum": ["minimal", "facts", "full"], "default": "full" }, "description": "'minimal' = metadata only (no body); 'facts' = frontmatter minus game_hooks + body; 'full' = everything." }
         ],
         "responses": {
           "200": {
@@ -69,6 +73,17 @@
               "text/markdown": { "schema": { "type": "string" } }
             }
           },
+          "404": { "description": "Chapter id not found" }
+        }
+      }
+    },
+    "/api/chapters/{id}/annotated": {
+      "get": {
+        "tags": ["chapter"],
+        "summary": "Chapter body with inline annotations (glossary terms + prices) by character offset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Annotated chapter", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnnotatedBody" } } } },
           "404": { "description": "Chapter id not found" }
         }
       }
@@ -100,7 +115,8 @@
         "summary": "One character testimony",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] } }
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["raw"] } },
+          { "name": "profile", "in": "query", "schema": { "type": "string", "enum": ["minimal", "facts", "full"], "default": "full" }, "description": "'minimal' = metadata only (no body); 'facts' = frontmatter minus game_hooks + body; 'full' = everything." }
         ],
         "responses": {
           "200": {
@@ -110,6 +126,18 @@
               "text/markdown": { "schema": { "type": "string" } }
             }
           },
+          "404": { "description": "Character id not found" }
+        }
+      }
+    },
+    "/api/characters/{id}/annotated": {
+      "get": {
+        "tags": ["character"],
+        "summary": "Testimony body with inline annotations (glossary terms + prices) by character offset",
+        "description": "Returns the verbatim body plus an `annotations` array. Each annotation has `{type, start, end, matched_text, ...}` — `gloss` carries the full glossary entry, `price` carries the parsed £/s/d and a CPI-based modern-GBP estimate. Offsets are UTF-16 code units. Use for building a reader with glossary popovers and currency-conversion hovers.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Annotated testimony", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnnotatedBody" } } } },
           "404": { "description": "Character id not found" }
         }
       }
@@ -218,8 +246,9 @@
       "get": {
         "tags": ["synthesis"],
         "summary": "Pre-decimal £/s/d → modern GBP on four economic bases",
-        "description": "Returns real_price (CPI), labour_value (avg earnings), income_value (GDP per capita), and economic_share (GDP share). These differ by an order of magnitude — use the one appropriate to what you are comparing (consumer goods vs. wages vs. industry totals).",
+        "description": "Returns real_price (CPI), labour_value (avg earnings), income_value (GDP per capita), and economic_share (GDP share). These differ by an order of magnitude — use the one appropriate to what you are comparing (consumer goods vs. wages vs. industry totals). Accept either the numeric triple or a single `literal` string (e.g. '£3 5s 6d', '6d', '3l. 5s.', '£148,000').",
         "parameters": [
+          { "name": "literal", "in": "query", "schema": { "type": "string" }, "description": "Pre-decimal literal, e.g. '£3 5s 6d'. Takes precedence over pounds/shillings/pence if both are passed." },
           { "name": "pounds", "in": "query", "schema": { "type": "number", "minimum": 0 } },
           { "name": "shillings", "in": "query", "schema": { "type": "number", "minimum": 0 } },
           { "name": "pence", "in": "query", "schema": { "type": "number", "minimum": 0 } }
@@ -376,7 +405,76 @@
           "origin": { "type": ["string", "null"] },
           "dialect_level": { "type": "string", "enum": ["standard", "moderate", "heavy", "composite"] },
           "accent_hint": { "type": "string" },
-          "speech_notes": { "type": "string" }
+          "speech_notes": { "type": "string" },
+          "pronunciation_overrides": {
+            "type": "array",
+            "description": "Spelling → IPA pairs for Mayhew's phonetic renderings. Without these a TTS engine mangles heavy-dialect characters.",
+            "items": {
+              "type": "object",
+              "required": ["spelling", "ipa"],
+              "properties": {
+                "spelling": { "type": "string" },
+                "ipa": { "type": "string" },
+                "note": { "type": "string" }
+              }
+            }
+          },
+          "suggested_voice_model": { "type": "string", "description": "Generic voice-model descriptor a casting pipeline can match against." },
+          "ssml_hints": { "type": ["string", "null"], "description": "Per-character SSML guidance where relevant." }
+        }
+      },
+      "AnnotationGloss": {
+        "type": "object",
+        "required": ["type", "term", "matched_text", "start", "end", "entry"],
+        "properties": {
+          "type": { "type": "string", "enum": ["gloss"] },
+          "term": { "type": "string" },
+          "matched_text": { "type": "string" },
+          "start": { "type": "integer" },
+          "end": { "type": "integer" },
+          "entry": { "$ref": "#/components/schemas/GlossaryEntry" }
+        }
+      },
+      "AnnotationPrice": {
+        "type": "object",
+        "required": ["type", "matched_text", "start", "end", "pounds", "shillings", "pence", "decimal_pounds_1851", "modern_gbp_approx_cpi"],
+        "properties": {
+          "type": { "type": "string", "enum": ["price"] },
+          "matched_text": { "type": "string" },
+          "start": { "type": "integer" },
+          "end": { "type": "integer" },
+          "pounds": { "type": "number" },
+          "shillings": { "type": "number" },
+          "pence": { "type": "number" },
+          "decimal_pounds_1851": { "type": "number" },
+          "modern_gbp_approx_cpi": { "type": "number" }
+        }
+      },
+      "AnnotatedBody": {
+        "type": "object",
+        "required": ["id", "url", "body", "annotations", "annotation_summary"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "source_lines": { "type": ["string", "null"] },
+          "body": { "type": "string" },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "$ref": "#/components/schemas/AnnotationGloss" },
+                { "$ref": "#/components/schemas/AnnotationPrice" }
+              ]
+            }
+          },
+          "annotation_summary": {
+            "type": "object",
+            "properties": {
+              "gloss_count": { "type": "integer" },
+              "price_count": { "type": "integer" },
+              "body_length": { "type": "integer" }
+            }
+          }
         }
       },
       "GlossaryEntry": {
@@ -451,11 +549,22 @@
           "context": { "type": "string" }
         }
       },
+      "QuoteCoverage": {
+        "type": "object",
+        "required": ["curated_count", "total_curated", "policy", "exhaustive"],
+        "properties": {
+          "curated_count": { "type": "integer", "description": "Entries returned after applied filters." },
+          "total_curated": { "type": "integer", "description": "Total curated entries in the collection (before filters)." },
+          "policy": { "type": "string", "description": "Selection policy describing what the curation is and isn't." },
+          "exhaustive": { "type": "boolean", "description": "Always false — the corpus has more quotable lines than the curation. Use search/get_source_lines beyond the curated set." }
+        }
+      },
       "Quotes": {
         "type": "object",
         "properties": {
           "version": { "type": "integer" },
-          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/QuoteEntry" } }
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/QuoteEntry" } },
+          "coverage": { "$ref": "#/components/schemas/QuoteCoverage" }
         }
       },
       "IllustrationEntry": {

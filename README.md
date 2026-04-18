@@ -29,13 +29,16 @@ Or via the CLI:
 claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp
 ```
 
-You'll get seventeen tools plus five prompts:
+You'll get nineteen tools plus five prompts:
 
-- **Catalogue** — `get_index`, `list_chapters`, `get_chapter`, `list_characters`, `get_character` (includes `mayhew` — a dossier on the narrator himself)
+- **Catalogue** — `get_index` (accepts `depth: "shallow"` for a ~2kb navigation-only variant, or `"full"` for the 16kb master), `list_chapters`, `get_chapter`, `list_characters`, `get_character` (accepts `profile: "minimal" | "facts" | "full"` to control payload; `"facts"` drops the game_hooks block; includes `mayhew` — a dossier on the narrator himself)
+- **Reader UI** — `get_character_annotated`, `get_chapter_annotated` (return body + span offsets for glossary terms and pre-decimal price references — drop into a reader with popovers for gloss and currency)
 - **Search** — `search` (exact-match substring), `semantic_search` (meaning-based via embeddings)
-- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `get_mentions_of` (reverse graph lookup), `voice_profile`, `list_quotes`, `list_illustrations`, `list_quiz`, `normalize_price` (four economic bases: CPI, labour value, income value, GDP share)
+- **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `get_mentions_of` (reverse graph lookup), `voice_profile` (TTS-ready — `pronunciation_overrides` in IPA, `suggested_voice_model`, `ssml_hints`), `list_quotes` (with `coverage` field — curation is not exhaustive), `list_illustrations`, `list_quiz`, `normalize_price` (four economic bases: CPI, labour value, income value, GDP share; accepts `{pounds, shillings, pence}` or `{literal: "£3 5s 6d"}`)
 - **Citation** — `get_source_lines` (verbatim slice by line range — use for precise quoting without fetching whole dossiers)
 - **Prompts** — `summarise_character_for_kids`, `narrate_character_in_voice`, `find_passages_on`, `map_tour`, `quiz_on`
+
+Every tool description carries a `cost:` tag (cheap/expensive) so agents can budget call patterns. Only `semantic_search` is expensive (live embedding + Neon pgvector query).
 
 Call `get_index` first when you start a session — it returns the entire catalogue (plus `version` and git `commit` for cache invalidation) in one shot.
 
@@ -45,18 +48,20 @@ Call `get_index` first when you start a session — it returns the entire catalo
 
 | Endpoint | Returns |
 |----------|---------|
-| `GET /api/index` | Master catalogue (chapters + characters + line counts + INDEX.md files) |
+| `GET /api/index` | Master catalogue (chapters + characters + line counts + INDEX.md files). Add `?depth=shallow` for a ~2kb navigation-only variant (ids + titles/labels only). |
 | `GET /api/chapters` | List of chapters with metadata |
-| `GET /api/chapters/{id}` | One chapter (`?format=raw` for markdown) |
-| `GET /api/characters` | List of testimonies with metadata |
-| `GET /api/characters/{id}` | One testimony (`?format=raw` for markdown) |
-| `GET /api/characters/{id}/voice` | TTS/voice-casting profile — gender, age band, dialect level, accent hint, speech notes |
+| `GET /api/chapters/{id}` | One chapter (`?format=raw` for markdown; `?profile=minimal\|facts\|full` to control payload) |
+| `GET /api/chapters/{id}/annotated` | Chapter body + inline span offsets for glossary terms and pre-decimal prices |
+| `GET /api/characters` | List of testimonies with metadata (includes `mayhew` — the narrator dossier) |
+| `GET /api/characters/{id}` | One testimony (`?format=raw` for markdown; `?profile=minimal\|facts\|full` to control payload) |
+| `GET /api/characters/{id}/annotated` | Testimony body + inline span offsets for glossary terms and pre-decimal prices — feeds a reader UI with popovers |
+| `GET /api/characters/{id}/voice` | TTS/voice-casting profile — gender, age band, dialect level, accent hint, speech notes, IPA pronunciation overrides, suggested voice model, SSML hints |
 | `GET /api/glossary` | Canonical Victorian slang glossary (`tosh`, `pure`, `brieze` …) with chapter + line citations |
 | `GET /api/glossary/{term}` | One glossary entry |
 | `GET /api/locations` | Structured geography — lat/lng + chapter + character refs for every named London place |
 | `GET /api/relationships` | Cross-reference graph — character edges to the people and institutions they mention |
 | `GET /api/relationships/mentions?q={name}` | Reverse graph lookup — every edge pointing AT a person, place, or institution (substring-match) |
-| `GET /api/prices/normalize?pounds={n}&shillings={n}&pence={n}` | Pre-decimal → decimal 1851 pounds → modern GBP on four economic bases (real_price / labour_value / income_value / economic_share). These can differ by an order of magnitude — use the one appropriate to what you are comparing. |
+| `GET /api/prices/normalize?pounds={n}&shillings={n}&pence={n}` | Pre-decimal → decimal 1851 pounds → modern GBP on four economic bases (real_price / labour_value / income_value / economic_share). These can differ by an order of magnitude — use the one appropriate to what you are comparing. Also accepts `?literal=£3+5s+6d` (or `3l.+5s.`) as a string input. |
 | `GET /api/quotes?speaker_id=&chapter_ref=&theme=&dialect_level=` | Canonical pulled-quotes — verbatim text, speaker, dialect level, TTS-normalised rendition |
 | `GET /api/illustrations` | Original 1861 Beard-daguerreotype plates with public-domain image URLs (Project Gutenberg) |
 | `GET /api/quiz?chapter_ref=&difficulty=` | Fact-check triples — question, answer, and `source.txt` citation |

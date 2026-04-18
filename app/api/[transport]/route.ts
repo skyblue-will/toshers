@@ -1,6 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import {
+  applyProfile,
   getCharacter,
   getChapter,
   getMasterIndex,
@@ -8,6 +9,7 @@ import {
   listChapters,
   listCharacters,
   search,
+  type Profile,
 } from "@/lib/content";
 import { semanticSearch } from "@/lib/semantic";
 import {
@@ -20,8 +22,9 @@ import {
   listQuotes,
   listRelationships,
 } from "@/lib/data";
+import { annotateBody } from "@/lib/annotate";
 import { voiceProfile } from "@/lib/voice";
-import { normalizePrice } from "@/lib/prices";
+import { normalizePrice, parsePriceLiteral } from "@/lib/prices";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -33,18 +36,26 @@ const handler = createMcpHandler(
     // falls back gracefully in older ones.)
     server.tool(
       "get_index",
-      "Returns the full master catalogue: source metadata, all chapter summaries, all character summaries, and the API surface. Call this first when you land in a fresh session — it gives you everything you need to navigate without further exploration.",
-      {},
-      async () => ({
+      "Master catalogue. Default depth='full' returns source metadata, all chapter summaries, all character summaries, the INDEX.md contents, and the full REST surface map (~16kb). Depth='shallow' returns just ids + titles/labels + the REST map (~2kb) — use it when you only need to resolve ids, not dossiers. Call this first when you land in a fresh session. (cost: cheap)",
+      {
+        depth: z
+          .enum(["shallow", "full"])
+          .optional()
+          .describe("'shallow' (~2kb, ids+titles only) or 'full' (~16kb, full catalogue). Default: full."),
+      },
+      async ({ depth }) => ({
         content: [
-          { type: "text", text: JSON.stringify(getMasterIndex(), null, 2) },
+          {
+            type: "text",
+            text: JSON.stringify(getMasterIndex(depth ?? "full"), null, 2),
+          },
         ],
       }),
     );
 
     server.tool(
       "list_chapters",
-      "List all 11 chapters with title, hook, and source line range. Lightweight — does not load chapter bodies.",
+      "List all 11 chapters with title, hook, and source line range. Lightweight — does not load chapter bodies. Two-digit prefix tracks chapter order (matches source/INDEX.md). (cost: cheap)",
       {},
       async () => ({
         content: [
@@ -55,9 +66,15 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_chapter",
-      "Fetch one chapter file by id (e.g. '07-sewer-hunters-toshers'). Returns the YAML frontmatter (parsed) plus the verbatim Mayhew text body. Use list_chapters or get_index first to find the right id.",
-      { id: z.string().describe("Chapter id, e.g. '07-sewer-hunters-toshers'") },
-      async ({ id }) => {
+      "Fetch one chapter file by id (e.g. '07-sewer-hunters-toshers'). Returns the YAML frontmatter (parsed) plus the verbatim Mayhew text body. Use list_chapters or get_index first to find the right id. `profile` controls payload: 'minimal' (metadata only, no body), 'facts' (frontmatter minus game_hooks + body), 'full' (everything — default). (cost: cheap)",
+      {
+        id: z.string().describe("Chapter id, e.g. '07-sewer-hunters-toshers'"),
+        profile: z
+          .enum(["minimal", "facts", "full"])
+          .optional()
+          .describe("'minimal' = metadata only (no body); 'facts' = all frontmatter except game_hooks, plus body; 'full' = everything. Default: full."),
+      },
+      async ({ id, profile }) => {
         const c = getChapter(id);
         if (!c) {
           return {
@@ -67,7 +84,9 @@ const handler = createMcpHandler(
             isError: true,
           };
         }
-        const meta = c.meta as Record<string, unknown>;
+        const resolved: Profile = profile ?? "full";
+        const meta = applyProfile(c.meta as Record<string, unknown>, resolved);
+        const sourceLines = (c.meta as Record<string, unknown>).source_lines;
         return {
           content: [
             {
@@ -76,9 +95,10 @@ const handler = createMcpHandler(
                 {
                   id,
                   url: `/api/chapters/${id}`,
-                  source_lines: meta.source_lines ? String(meta.source_lines) : null,
+                  profile: resolved,
+                  source_lines: sourceLines ? String(sourceLines) : null,
                   meta,
-                  body: c.body,
+                  body: resolved === "minimal" ? null : c.body,
                 },
                 null,
                 2,
@@ -91,7 +111,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_characters",
-      "List all 11 first-person testimonies and character scenes with label, occupation, age, origin, key facts, and game hooks. Lightweight — does not load full testimony bodies.",
+      "List all character testimonies and character scenes with label, occupation, age, origin, key_facts and game_hooks. Lightweight — does not load full testimony bodies. Includes `mayhew` (unnumbered) as the narrator-dossier alongside the 11 numbered testimonies; the numeric prefix on testimony ids tracks catalogue order, NOT the chapter the voice appears in. (cost: cheap)",
       {},
       async () => ({
         content: [
@@ -102,11 +122,58 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_character",
-      "Fetch one character testimony file by id (e.g. '06-cuckolds-point-tosher'). Returns parsed frontmatter plus the verbatim Mayhew framing and direct testimony.",
+      "Fetch one character testimony file by id (e.g. '06-cuckolds-point-tosher', or 'mayhew' for the narrator dossier). Returns parsed frontmatter plus the verbatim Mayhew framing and direct testimony. `profile` controls payload: 'minimal' (metadata only, no body), 'facts' (frontmatter minus game_hooks + body — drops the RPG-oriented interpretive layer), 'full' (everything — default). Use 'facts' when you want reusable factual data without the interpretive game-hooks block. (cost: cheap)",
       {
         id: z
           .string()
-          .describe("Character id, e.g. '06-cuckolds-point-tosher' or '09-jc-coalwhipper-son-mud-lark'"),
+          .describe("Character id, e.g. '06-cuckolds-point-tosher', '09-jc-coalwhipper-son-mud-lark', or 'mayhew'"),
+        profile: z
+          .enum(["minimal", "facts", "full"])
+          .optional()
+          .describe("'minimal' = metadata only (no body); 'facts' = all frontmatter except game_hooks, plus body; 'full' = everything. Default: full."),
+      },
+      async ({ id, profile }) => {
+        const c = getCharacter(id);
+        if (!c) {
+          return {
+            content: [
+              { type: "text", text: `Character not found: ${id}. Call list_characters to see available ids.` },
+            ],
+            isError: true,
+          };
+        }
+        const resolved: Profile = profile ?? "full";
+        const meta = applyProfile(c.meta as Record<string, unknown>, resolved);
+        const sourceLines = (c.meta as Record<string, unknown>).source_lines;
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id,
+                  url: `/api/characters/${id}`,
+                  profile: resolved,
+                  source_lines: sourceLines ? String(sourceLines) : null,
+                  meta,
+                  body: resolved === "minimal" ? null : c.body,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      },
+    );
+
+    server.tool(
+      "get_character_annotated",
+      "Fetch one character testimony WITH inline annotations — glossary-term spans and pre-decimal price spans by character offset into the body. Returns `{body, annotations[]}` where each annotation has `{type: \"gloss\"|\"price\", start, end, matched_text, ...}`. Use for building a reader UI with glossary popovers and currency-conversion hovers — consumers don't need to re-scan the text. Prices return both the parsed £/s/d breakdown and a CPI-based modern-GBP estimate (call normalize_price for multi-basis conversion). Offsets are UTF-16 code units. (cost: cheap — pure text scan)",
+      {
+        id: z
+          .string()
+          .describe("Character id, e.g. '06-cuckolds-point-tosher' or 'mayhew'"),
       },
       async ({ id }) => {
         const c = getCharacter(id);
@@ -118,6 +185,8 @@ const handler = createMcpHandler(
             isError: true,
           };
         }
+        const glossary = listGlossary().entries;
+        const annotations = annotateBody(c.body, glossary);
         const meta = c.meta as Record<string, unknown>;
         return {
           content: [
@@ -126,10 +195,60 @@ const handler = createMcpHandler(
               text: JSON.stringify(
                 {
                   id,
-                  url: `/api/characters/${id}`,
+                  url: `/api/characters/${id}/annotated`,
                   source_lines: meta.source_lines ? String(meta.source_lines) : null,
-                  meta,
                   body: c.body,
+                  annotations,
+                  annotation_summary: {
+                    gloss_count: annotations.filter((a) => a.type === "gloss").length,
+                    price_count: annotations.filter((a) => a.type === "price").length,
+                    body_length: c.body.length,
+                  },
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      },
+    );
+
+    server.tool(
+      "get_chapter_annotated",
+      "Fetch one chapter WITH inline annotations — identical shape to get_character_annotated but against chapter bodies. Returns `{body, annotations[]}` with glossary-term and pre-decimal price spans keyed by character offset. Use for reader UIs that want chapter-level annotation. (cost: cheap — pure text scan)",
+      {
+        id: z.string().describe("Chapter id, e.g. '07-sewer-hunters-toshers'"),
+      },
+      async ({ id }) => {
+        const c = getChapter(id);
+        if (!c) {
+          return {
+            content: [
+              { type: "text", text: `Chapter not found: ${id}. Call list_chapters to see available ids.` },
+            ],
+            isError: true,
+          };
+        }
+        const glossary = listGlossary().entries;
+        const annotations = annotateBody(c.body, glossary);
+        const meta = c.meta as Record<string, unknown>;
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id,
+                  url: `/api/chapters/${id}/annotated`,
+                  source_lines: meta.source_lines ? String(meta.source_lines) : null,
+                  body: c.body,
+                  annotations,
+                  annotation_summary: {
+                    gloss_count: annotations.filter((a) => a.type === "gloss").length,
+                    price_count: annotations.filter((a) => a.type === "price").length,
+                    body_length: c.body.length,
+                  },
                 },
                 null,
                 2,
@@ -142,7 +261,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "search",
-      "Case-insensitive SUBSTRING search across the verbatim source.txt. Use this for EXACT-MATCH queries: place names ('Bermondsey'), slang ('tosh', 'brieze'), institutions ('workhouse'), numbers, quoted phrases. Returns line numbers, the matching line, and surrounding context. For concept-based queries (e.g. 'physical disability', 'fear of authority', 'children working at night'), use `semantic_search` instead.",
+      "Case-insensitive SUBSTRING search across the verbatim source.txt. Use this for EXACT-MATCH queries: place names ('Bermondsey'), slang ('tosh', 'brieze'), institutions ('workhouse'), numbers, quoted phrases. Returns line numbers, the matching line, and surrounding context. For concept-based queries (e.g. 'physical disability', 'fear of authority', 'children working at night'), use `semantic_search` instead. (cost: cheap)",
       {
         query: z.string().describe("Search term"),
         limit: z.number().int().positive().max(50).optional().describe("Max hits to return (default 10, max 50)"),
@@ -157,7 +276,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "semantic_search",
-      "Meaning-based (embedding) search across Mayhew's corpus. Use when you want passages by CONCEPT rather than exact wording — Mayhew often describes things without using the modern word for them (e.g. 'physical disability' returns his descriptions of the paralysed waterman, the lame grubber, the one-armed sifter, even though he never uses the word 'disability'). Returns ranked hits with source.txt line citations in the same shape as `search`, plus a `score` field (0–1, higher is more similar). The `kind` filter lets you restrict hits to the raw source, chapter summaries, or character testimonies. Use `search` for exact-match queries.",
+      "Meaning-based (embedding) search across Mayhew's corpus. Use when you want passages by CONCEPT rather than exact wording — Mayhew often describes things without using the modern word for them (e.g. 'physical disability' returns his descriptions of the paralysed waterman, the lame grubber, the one-armed sifter, even though he never uses the word 'disability'). Returns ranked hits with source.txt line citations in the same shape as `search`, plus a `score` field (0–1, higher is more similar). The `kind` filter lets you restrict hits to the raw source, chapter summaries, or character testimonies. Use `search` for exact-match queries. (cost: expensive — live embedding API call via Vercel AI Gateway + Neon pgvector query per request)",
       {
         query: z.string().describe("Natural-language query. Full phrases work better than single keywords."),
         limit: z.number().int().positive().max(50).optional().describe("Max hits (default 10, max 50)"),
@@ -189,7 +308,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_glossary",
-      "Canonical glossary of Victorian street-trade slang from the Mayhew extract — 'tosh', 'pure', 'bunters', 'brieze', 'chiffoniers', etc. Each entry has term, part of speech, definition, the chapter it lives in, and source.txt line citations. Use this instead of guessing what period slang means.",
+      "Canonical glossary of Victorian street-trade slang from the Mayhew extract — 'tosh', 'pure', 'bunters', 'brieze', 'chiffoniers', etc. Each entry has term, part of speech, definition, the chapter it lives in, and source.txt line citations. Use this instead of guessing what period slang means. (cost: cheap)",
       {},
       async () => ({
         content: [{ type: "text", text: JSON.stringify(listGlossary(), null, 2) }],
@@ -198,7 +317,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_glossary_term",
-      "Fetch one glossary entry by term (case-insensitive, e.g. 'tosh', 'brieze'). Returns definition + chapter + source.txt line citations.",
+      "Fetch one glossary entry by term (case-insensitive, e.g. 'tosh', 'brieze'). Returns definition + chapter + source.txt line citations. (cost: cheap)",
       { term: z.string().describe("Glossary term, e.g. 'tosh'") },
       async ({ term }) => {
         const entry = getGlossaryTerm(term);
@@ -221,7 +340,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_locations",
-      "Structured London geography of the Mayhew extract — Cuckold's Point, Bermondsey tanyards, Petticoat Lane, Hyde Park fire-rubbish ground, etc. Each location has modern lat/lng coords (WGS84), a 1851 description, chapter + character cross-refs, and source.txt line citations. Use for map pins, route visualisations, or geographic queries.",
+      "Structured London geography of the Mayhew extract — Cuckold's Point, Bermondsey tanyards, Petticoat Lane, Hyde Park fire-rubbish ground, etc. Each location has modern lat/lng coords (WGS84), a 1851 description, chapter + character cross-refs, and source.txt line citations. Use for map pins, route visualisations, or geographic queries. (cost: cheap)",
       {},
       async () => ({
         content: [{ type: "text", text: JSON.stringify(listLocations(), null, 2) }],
@@ -230,7 +349,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_relationships",
-      "Cross-reference graph — edges between canonical character voices and the people/institutions they mention (Long J—— the tosher's rival; Sall the dustman's partner; Bradbury & Evans the printers; Mr Brown the missing-heir pure-finder). Edges run character → mentioned. For the reverse direction (\"who mentions Long J——?\", \"what edges touch Bermondsey?\"), use `get_mentions_of`. Use for dramatis personae, NPC scaffolding, or relationship visualisations.",
+      "Cross-reference graph — edges between canonical character voices and the people/institutions they mention (Long J—— the tosher's rival; Sall the dustman's partner; Bradbury & Evans the printers; Mr Brown the missing-heir pure-finder). Edges run character → mentioned. For the reverse direction (\"who mentions Long J——?\", \"what edges touch Bermondsey?\"), use `get_mentions_of`. Use for dramatis personae, NPC scaffolding, or relationship visualisations. (cost: cheap)",
       {},
       async () => ({
         content: [{ type: "text", text: JSON.stringify(listRelationships(), null, 2) }],
@@ -239,7 +358,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_mentions_of",
-      "Reverse lookup on the relationship graph: find every edge that POINTS AT a given person, place, or institution (case-insensitive substring match against the target's label and id). Answers questions `list_relationships` can't — 'who mentions Long J——?', 'which characters reference Bermondsey?', 'what edges touch Bradbury & Evans?'. Returns matching edges with the source character, relationship type, description, and source_lines citation. Use with a specific name fragment — 'Long J' or 'Bermondsey' — not a whole sentence.",
+      "Reverse lookup on the relationship graph: find every edge that POINTS AT a given person, place, or institution (case-insensitive substring match against the target's label and id). Answers questions `list_relationships` can't — 'who mentions Long J——?', 'which characters reference Bermondsey?', 'what edges touch Bradbury & Evans?'. Returns matching edges with the source character, relationship type, description, and source_lines citation. Use with a specific name fragment — 'Long J' or 'Bermondsey' — not a whole sentence. (cost: cheap)",
       {
         query: z
           .string()
@@ -256,7 +375,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "voice_profile",
-      "Returns a voice-casting/TTS profile for a character: gender, age_band, dialect_level (standard|moderate|heavy), accent_hint, and speech_notes (characteristic spellings and cant words Mayhew preserves). Derived from the character's frontmatter plus per-character curation. Use for picking a narration voice or priming a stylised dialogue generator.",
+      "Returns a TTS/voice-casting profile for a character: gender, age_band, dialect_level, accent_hint, speech_notes, AND concrete TTS-oriented fields — `pronunciation_overrides` (spelling→IPA pairs for Mayhew's phonetic renderings like 'vos'→/vɒz/, 'P'int'→/pɔɪnt/, 'niver'→/ˈnɪvə/; without these a TTS engine mangles heavy-dialect characters), `suggested_voice_model` (generic voice-model descriptor a casting pipeline can match against), and `ssml_hints` (per-character SSML guidance where relevant). Use for picking a narration voice or priming a stylised dialogue/TTS generator. Works for 'mayhew' too. (cost: cheap)",
       {
         id: z
           .string()
@@ -283,17 +402,33 @@ const handler = createMcpHandler(
 
     server.tool(
       "normalize_price",
-      "Converts a pre-decimal British amount (£/s/d — pounds, shillings, pence) into decimal 1851 pounds and returns FOUR modern-GBP equivalents on different economic bases: real_price (CPI, for consumer goods), labour_value (average earnings, for wages), income_value (GDP per capita, for personal income/status), and economic_share (GDP share, for industry totals and public budgets). These can differ by an ORDER OF MAGNITUDE — the dust trade's £148,000/year is ~£22M on CPI but ~£1.15B on GDP-share. Use real_price for individual goods, labour_value for wages/worker income, economic_share for large aggregate sums. Response includes per-basis multiplier, endpoint year, and source. Top-level `modern_gbp_approx` and `basis` aliases preserved for back-compat (they mirror real_price).",
+      "Converts a pre-decimal British amount (£/s/d — pounds, shillings, pence) into decimal 1851 pounds and returns FOUR modern-GBP equivalents on different economic bases: real_price (CPI, for consumer goods), labour_value (average earnings, for wages), income_value (GDP per capita, for personal income/status), and economic_share (GDP share, for industry totals and public budgets). These can differ by an ORDER OF MAGNITUDE — the dust trade's £148,000/year is ~£22M on CPI but ~£1.15B on GDP-share. Use real_price for individual goods, labour_value for wages/worker income, economic_share for large aggregate sums. Accept either `{pounds, shillings, pence}` or a `literal` string (e.g. '£3 5s 6d', '6d', '£148,000', '3l. 5s.' Mayhew's l. notation). Response includes per-basis multiplier, endpoint year, and source. Top-level `modern_gbp_approx` and `basis` aliases preserved for back-compat (they mirror real_price). (cost: cheap — pure math)",
       {
+        literal: z
+          .string()
+          .optional()
+          .describe("Pre-decimal string, e.g. '£3 5s 6d', '6d', '£148,000', '3l. 5s.'. Takes precedence over pounds/shillings/pence if both are passed."),
         pounds: z.number().min(0).optional().describe("Pounds (£). Default 0."),
         shillings: z.number().min(0).optional().describe("Shillings (s). 20 per pound. Default 0."),
         pence: z.number().min(0).optional().describe("Pence (d). 12 per shilling. Default 0."),
       },
-      async ({ pounds, shillings, pence }) => {
+      async ({ literal, pounds, shillings, pence }) => {
         try {
-          const result = normalizePrice({ pounds, shillings, pence });
+          const input = literal
+            ? parsePriceLiteral(literal)
+            : { pounds, shillings, pence };
+          const result = normalizePrice(input);
           return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  { ...result, input_mode: literal ? "literal" : "numeric" },
+                  null,
+                  2,
+                ),
+              },
+            ],
           };
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
@@ -307,7 +442,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_quotes",
-      "Canonical pulled-quotes from the Mayhew extract — verbatim text plus speaker_id, dialect_level (standard|moderate|heavy), theme, and a tts_normalized rendition for narration engines that struggle with 19th-century phonetic spellings. Filter by speaker_id, chapter_ref, theme, or dialect_level. Use for headline cards, quote-of-the-day panels, TTS audio, or fact-checking a rendered snippet.",
+      "CURATED (NOT exhaustive) pulled-quotes from the Mayhew extract — verbatim text plus speaker_id, dialect_level (standard|moderate|heavy), theme, and a tts_normalized rendition for narration engines that struggle with 19th-century phonetic spellings. Filter by speaker_id, chapter_ref, theme, or dialect_level. Response includes a `coverage` field documenting the selection policy and flagging `exhaustive: false` — there are many more quotable lines in source.txt than the ~21 in this list. If you need quotes beyond the curated selection, call search/semantic_search/get_source_lines directly. Use for headline cards, quote-of-the-day panels, TTS audio, or fact-checking a rendered snippet. (cost: cheap)",
       {
         speaker_id: z.string().optional().describe("Character id, e.g. '06-cuckolds-point-tosher' or 'mayhew' for the narrator"),
         chapter_ref: z.string().optional().describe("Chapter id to filter by"),
@@ -321,7 +456,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_illustrations",
-      "Original 1861 woodcut plates from Mayhew's Vol. II, engraved from Richard Beard daguerreotypes — bone-grubber, mud-lark, sewer-hunter, dust-yard, rat-catcher, nightmen, etc. Each entry has display and high-res image URLs (Project Gutenberg, public domain), caption, chapter + character refs. Use for map-marker artwork, card illustrations, or citation-backed visual research.",
+      "Original 1861 woodcut plates from Mayhew's Vol. II, engraved from Richard Beard daguerreotypes — bone-grubber, mud-lark, sewer-hunter, dust-yard, rat-catcher, nightmen, etc. Each entry has display and high-res image URLs (Project Gutenberg, public domain), caption, chapter + character refs. Use for map-marker artwork, card illustrations, or citation-backed visual research. (cost: cheap)",
       {},
       async () => ({
         content: [{ type: "text", text: JSON.stringify(listIllustrations(), null, 2) }],
@@ -330,7 +465,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "list_quiz",
-      "Canonical fact-check triples from the Mayhew extract — question, answer, and source.txt line citation. Filter by chapter_ref or difficulty (easy|medium|hard). Use for quiz features or answer-validation when a consumer agent has generated an assertion about the text.",
+      "Canonical fact-check triples from the Mayhew extract — question, answer, and source.txt line citation. Filter by chapter_ref or difficulty (easy|medium|hard). Use for quiz features or answer-validation when a consumer agent has generated an assertion about the text. (cost: cheap)",
       {
         chapter_ref: z.string().optional().describe("Chapter id to filter by"),
         difficulty: z.enum(["easy", "medium", "hard"]).optional().describe("Difficulty filter"),
@@ -342,7 +477,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_source_lines",
-      "Fetch a verbatim slice from source.txt by line range. Useful for quoting Mayhew with exact citations. Capped at 500 lines per call. Returns clamped start/end and the raw text.",
+      "Fetch a verbatim slice from source.txt by line range. Useful for quoting Mayhew with exact citations — fetch only the lines you need rather than pulling a whole character or chapter dossier. Capped at 500 lines per call. Returns clamped start/end and the raw text. (cost: cheap)",
       {
         start: z.number().int().positive().describe("First line (1-indexed, inclusive)"),
         end: z.number().int().positive().describe("Last line (inclusive). Will be clamped to start+499 if larger."),
