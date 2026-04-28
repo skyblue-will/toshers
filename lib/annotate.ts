@@ -14,10 +14,28 @@ import { normalizePrice, type NormalizedPrice } from "./prices";
 export type GlossAnnotation = {
   type: "gloss";
   term: string;
+  // Which surface form matched — the canonical `term` or one of its
+  // aliases (e.g. dialect variants like "shore-worker" → "shore-men").
+  // null means the literal `term` matched.
+  matched_alias: string | null;
   matched_text: string;
   start: number;
   end: number;
   entry: GlossaryEntry;
+};
+
+// Modern-GBP equivalents on each of the four economic bases. Pre-decimal
+// sums have no single "modern equivalent" — a Victorian price can differ
+// by an order of magnitude between bases. Inlining all four lets a reader
+// UI render the right one for context (real_price for goods, labour_value
+// for wages, economic_share for trade aggregates) without a per-price
+// callback to normalize_price. Full per-basis metadata (multiplier,
+// endpoint year, source) is still available via the normalize_price tool.
+export type PriceBases = {
+  real_price: number;
+  labour_value: number;
+  income_value: number;
+  economic_share: number;
 };
 
 export type PriceAnnotation = {
@@ -29,7 +47,9 @@ export type PriceAnnotation = {
   shillings: number;
   pence: number;
   decimal_pounds_1851: number;
+  // CPI value, retained as a back-compat alias mirroring bases.real_price.
   modern_gbp_approx_cpi: number;
+  bases: PriceBases;
 };
 
 export type Annotation = GlossAnnotation | PriceAnnotation;
@@ -205,26 +225,37 @@ function findGlossMatches(body: string, glossary: GlossaryEntry[]): Array<{
   start: number;
   end: number;
   matched_text: string;
+  matched_alias: string | null;
   entry: GlossaryEntry;
 }> {
   const hits: Array<{
     start: number;
     end: number;
     matched_text: string;
+    matched_alias: string | null;
     entry: GlossaryEntry;
   }> = [];
   for (const entry of glossary) {
-    // Word-boundary, case-insensitive. Escape regex metachars in the term
-    // (Victorian glossary terms don't use regex chars, but belt-and-braces).
-    const safe = entry.term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`\\b${safe}\\b`, "gi");
-    for (let m = re.exec(body); m !== null; m = re.exec(body)) {
-      hits.push({
-        start: m.index,
-        end: m.index + m[0].length,
-        matched_text: m[0],
-        entry,
-      });
+    // Match the canonical term plus any aliases (singular/plural pairs,
+    // dialect variants). Word-boundary, case-insensitive. Escape regex
+    // metachars defensively — Victorian terms don't use them, but aliases
+    // are author-authored and could.
+    const surfaces: Array<{ form: string; isAlias: boolean }> = [
+      { form: entry.term, isAlias: false },
+      ...(entry.aliases ?? []).map((a) => ({ form: a, isAlias: true })),
+    ];
+    for (const { form, isAlias } of surfaces) {
+      const safe = form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`\\b${safe}\\b`, "gi");
+      for (let m = re.exec(body); m !== null; m = re.exec(body)) {
+        hits.push({
+          start: m.index,
+          end: m.index + m[0].length,
+          matched_text: m[0],
+          matched_alias: isAlias ? form : null,
+          entry,
+        });
+      }
     }
   }
   return hits;
@@ -260,10 +291,24 @@ export function annotateBody(
   const priceHits = findPriceMatches(body);
 
   const all: Array<
-    | { kind: "gloss"; start: number; end: number; matched_text: string; entry: GlossaryEntry }
+    | {
+        kind: "gloss";
+        start: number;
+        end: number;
+        matched_text: string;
+        matched_alias: string | null;
+        entry: GlossaryEntry;
+      }
     | { kind: "price"; start: number; end: number; matched_text: string; raw: RawPriceMatch }
   > = [
-    ...glossHits.map((g) => ({ kind: "gloss" as const, start: g.start, end: g.end, matched_text: g.matched_text, entry: g.entry })),
+    ...glossHits.map((g) => ({
+      kind: "gloss" as const,
+      start: g.start,
+      end: g.end,
+      matched_text: g.matched_text,
+      matched_alias: g.matched_alias,
+      entry: g.entry,
+    })),
     ...priceHits.map((p) => ({ kind: "price" as const, start: p.start, end: p.end, matched_text: p.literal, raw: p })),
   ];
 
@@ -274,6 +319,7 @@ export function annotateBody(
       return {
         type: "gloss",
         term: m.entry.term,
+        matched_alias: m.matched_alias,
         matched_text: m.matched_text,
         start: m.start,
         end: m.end,
@@ -287,6 +333,14 @@ export function annotateBody(
     } catch {
       normalized = null;
     }
+    const findBasis = (key: string): number =>
+      normalized?.bases.find((b) => b.key === key)?.modern_gbp_approx ?? 0;
+    const bases: PriceBases = {
+      real_price: findBasis("real_price"),
+      labour_value: findBasis("labour_value"),
+      income_value: findBasis("income_value"),
+      economic_share: findBasis("economic_share"),
+    };
     return {
       type: "price",
       matched_text: m.matched_text,
@@ -296,7 +350,8 @@ export function annotateBody(
       shillings,
       pence,
       decimal_pounds_1851: normalized?.decimal_pounds_1851 ?? 0,
-      modern_gbp_approx_cpi: normalized?.modern_gbp_approx ?? 0,
+      modern_gbp_approx_cpi: bases.real_price,
+      bases,
     };
   });
 }

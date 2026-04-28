@@ -172,7 +172,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_character_annotated",
-      "Fetch one character testimony WITH inline annotations — glossary-term spans and pre-decimal price spans by character offset into the body. Returns `{body, annotations[]}` where each annotation has `{type: \"gloss\"|\"price\", start, end, matched_text, ...}`. Use for building a reader UI with glossary popovers and currency-conversion hovers — consumers don't need to re-scan the text. Prices return both the parsed £/s/d breakdown and a CPI-based modern-GBP estimate (call normalize_price for multi-basis conversion). Offsets are UTF-16 code units. (cost: cheap — pure text scan)",
+      "Fetch one character testimony WITH inline annotations — glossary-term spans and pre-decimal price spans by character offset into the body. Returns `{body, annotations[]}` where each annotation has `{type: \"gloss\"|\"price\", start, end, matched_text, ...}`. Use for building a reader UI with glossary popovers and currency-conversion hovers — consumers don't need to re-scan the text. Glossary annotations resolve dialect variants via the entry's `aliases` (e.g. 'shore-worker' → 'shore-men'); the matched form is reported back as `matched_alias`. Price annotations inline all FOUR modern-GBP equivalents in `bases` (real_price, labour_value, income_value, economic_share) — these can differ by an order of magnitude, so pick the right basis for context (real_price for goods, labour_value for wages, economic_share for trade aggregates). `modern_gbp_approx_cpi` is kept as a back-compat alias mirroring bases.real_price. For full per-basis metadata (multiplier, endpoint year, source), call normalize_price. Offsets are UTF-16 code units. (cost: cheap — pure text scan)",
       {
         id: z
           .string()
@@ -219,7 +219,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_chapter_annotated",
-      "Fetch one chapter WITH inline annotations — identical shape to get_character_annotated but against chapter bodies. Returns `{body, annotations[]}` with glossary-term and pre-decimal price spans keyed by character offset. Use for reader UIs that want chapter-level annotation. (cost: cheap — pure text scan)",
+      "Fetch one chapter WITH inline annotations — identical shape to get_character_annotated but against chapter bodies. Returns `{body, annotations[]}` with glossary-term and pre-decimal price spans keyed by character offset. Glossary annotations resolve dialect variants via the entry's `aliases` (the matched form is reported back as `matched_alias`). Price annotations inline all four modern-GBP bases (real_price, labour_value, income_value, economic_share) — call normalize_price for full per-basis metadata. Use for reader UIs that want chapter-level annotation. (cost: cheap — pure text scan)",
       {
         id: z.string().describe("Chapter id, e.g. '07-sewer-hunters-toshers'"),
       },
@@ -361,7 +361,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "get_mentions_of",
-      "Reverse lookup on the relationship graph: find every edge that POINTS AT a given person, place, or institution (case-insensitive substring match against the target's label and id). Answers questions `list_relationships` can't — 'who mentions Long J——?', 'which characters reference Bermondsey?', 'what edges touch Bradbury & Evans?'. Returns matching edges with the source character, relationship type, description, and source_lines citation. Use with a specific name fragment — 'Long J' or 'Bermondsey' — not a whole sentence. (cost: cheap)",
+      "Reverse lookup on the relationship graph: find every edge that POINTS AT or REFERENCES a given person, place, or institution. Case-insensitive substring match in priority order — to.id, then to.label, then the edge description. Each hit reports which field matched via `matched_on`. Description matching catches references that live only in the editorial commentary on an edge (e.g. 'Bermondsey' is mentioned in many descriptions but is never itself a canonical to.label — without description matching it would return zero hits despite obviously being touched by those edges). Answers questions `list_relationships` can't: 'who mentions Long J——?', 'which characters reference Bermondsey?', 'what edges touch Bradbury & Evans?'. Returns matching edges with the source character, relationship type, description, and source_lines citation. Use with a specific name fragment — 'Long J' or 'Bermondsey' — not a whole sentence. (cost: cheap)",
       {
         query: z
           .string()

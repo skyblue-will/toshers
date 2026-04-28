@@ -17,6 +17,12 @@ export type GlossaryEntry = {
   chapter_ref: string;
   source_lines: [number, number];
   etymology: string | null;
+  // Surface forms that should resolve to this entry — singular/plural pairs
+  // and dialect variants (e.g. "shore-worker" / "shore-workers" for the
+  // canonical "shore-men" entry, since the testimony bodies are in dialect
+  // and never use the canonical form). Matched case-insensitively with
+  // word boundaries, same rules as `term`.
+  aliases?: string[];
 };
 
 export type Glossary = {
@@ -34,7 +40,11 @@ export function listGlossary(): Glossary {
 export function getGlossaryTerm(term: string): GlossaryEntry | null {
   const needle = term.trim().toLowerCase();
   return (
-    GLOSSARY.entries.find((e) => e.term.toLowerCase() === needle) ?? null
+    GLOSSARY.entries.find(
+      (e) =>
+        e.term.toLowerCase() === needle ||
+        (e.aliases ?? []).some((a) => a.toLowerCase() === needle),
+    ) ?? null
   );
 }
 
@@ -94,7 +104,13 @@ export function listRelationships(): Relationships {
 
 export type MentionHit = {
   edge: RelationshipEdge;
-  matched_on: "to.id" | "to.label";
+  // Where the query matched on this edge. Priority order (only one is
+  // returned per edge): to.id > to.label > description. Description matches
+  // catch references that exist only in the editorial commentary on the
+  // edge — e.g. "Bermondsey" appears in many edge descriptions but is
+  // never itself a canonical to.label, so it would otherwise return zero
+  // hits despite the tool's stated purpose ("what edges touch X").
+  matched_on: "to.id" | "to.label" | "description";
 };
 
 export function findMentionsOf(query: string): {
@@ -109,12 +125,17 @@ export function findMentionsOf(query: string): {
   for (const edge of RELATIONSHIPS.edges) {
     const toId = edge.to.id?.toLowerCase() ?? "";
     const toLabel = edge.to.label.toLowerCase();
+    const desc = edge.description?.toLowerCase() ?? "";
     if (toId && toId.includes(q)) {
       hits.push({ edge, matched_on: "to.id" });
       continue;
     }
     if (toLabel.includes(q)) {
       hits.push({ edge, matched_on: "to.label" });
+      continue;
+    }
+    if (desc.includes(q)) {
+      hits.push({ edge, matched_on: "description" });
     }
   }
   return { query: q, hits, total: hits.length };

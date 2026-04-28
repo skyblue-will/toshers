@@ -428,7 +428,11 @@
         "required": ["type", "term", "matched_text", "start", "end", "entry"],
         "properties": {
           "type": { "type": "string", "enum": ["gloss"] },
-          "term": { "type": "string" },
+          "term": { "type": "string", "description": "Canonical glossary term." },
+          "matched_alias": {
+            "type": ["string", "null"],
+            "description": "Which surface form matched. null means the canonical `term` matched literally; otherwise this is the alias string from the glossary entry's aliases array (e.g. 'shore-worker' resolving to canonical 'shore-men')."
+          },
           "matched_text": { "type": "string" },
           "start": { "type": "integer" },
           "end": { "type": "integer" },
@@ -437,7 +441,7 @@
       },
       "AnnotationPrice": {
         "type": "object",
-        "required": ["type", "matched_text", "start", "end", "pounds", "shillings", "pence", "decimal_pounds_1851", "modern_gbp_approx_cpi"],
+        "required": ["type", "matched_text", "start", "end", "pounds", "shillings", "pence", "decimal_pounds_1851", "modern_gbp_approx_cpi", "bases"],
         "properties": {
           "type": { "type": "string", "enum": ["price"] },
           "matched_text": { "type": "string" },
@@ -447,7 +451,21 @@
           "shillings": { "type": "number" },
           "pence": { "type": "number" },
           "decimal_pounds_1851": { "type": "number" },
-          "modern_gbp_approx_cpi": { "type": "number" }
+          "modern_gbp_approx_cpi": {
+            "type": "number",
+            "description": "Back-compat alias mirroring bases.real_price."
+          },
+          "bases": {
+            "type": "object",
+            "description": "Modern-GBP equivalent on each of the four economic bases. These can differ by an order of magnitude — use real_price for consumer goods, labour_value for wages, economic_share for industry totals and public budgets. For full per-basis metadata (multiplier, endpoint year, source) call normalize_price.",
+            "required": ["real_price", "labour_value", "income_value", "economic_share"],
+            "properties": {
+              "real_price": { "type": "number", "description": "CPI / retail-price basis. Use for consumer goods." },
+              "labour_value": { "type": "number", "description": "Average-earnings basis. Use for wages and worker income." },
+              "income_value": { "type": "number", "description": "GDP-per-capita basis. Use for personal income and status." },
+              "economic_share": { "type": "number", "description": "Share-of-GDP basis. Use for aggregate trade figures and public budgets." }
+            }
+          }
         }
       },
       "AnnotatedBody": {
@@ -485,7 +503,12 @@
           "definition": { "type": "string" },
           "chapter_ref": { "type": "string" },
           "source_lines": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
-          "etymology": { "type": ["string", "null"] }
+          "etymology": { "type": ["string", "null"] },
+          "aliases": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Surface-form variants that resolve to this entry — singular/plural pairs, dialect spellings (e.g. 'shore-worker' / 'shore-workers' for 'shore-men'). Matched case-insensitively with word boundaries by the annotator and get_glossary_term."
+          }
         }
       },
       "Glossary": {
@@ -654,7 +677,11 @@
         "required": ["edge", "matched_on"],
         "properties": {
           "edge": { "$ref": "#/components/schemas/RelationshipEdge" },
-          "matched_on": { "type": "string", "enum": ["to.id", "to.label"] }
+          "matched_on": {
+            "type": "string",
+            "enum": ["to.id", "to.label", "description"],
+            "description": "Where the query matched on this edge. Priority order: to.id > to.label > description. 'description' catches references that live only in the editorial commentary on an edge."
+          }
         }
       },
       "MentionsResult": {
