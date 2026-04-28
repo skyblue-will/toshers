@@ -1,5 +1,9 @@
 # toshers
 
+[![Archestra Quality](https://archestra.ai/mcp-catalog/api/badge/quality/skyblue-will/toshers)](https://archestra.ai/mcp-catalog/skyblue-will__toshers)
+[![CI](https://github.com/skyblue-will/toshers/actions/workflows/ci.yml/badge.svg)](https://github.com/skyblue-will/toshers/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 A curated source library for any coding agent building something — a game, an interactive walkthrough, a learning tool, a generative narrative, a research visualisation — from the world of Victorian London's street-finders.
 
 **"Toshers"** was the name for the sewer-hunters of 1850s London: men in long greasy velveteen coats with eight-foot iron-hooked poles who worked the Thames sewer outlets at low tide, hunting for lost coins, copper, bones, and rope. This repo takes its name from them, but it covers the whole social stratum Mayhew documented.
@@ -29,7 +33,7 @@ Or via the CLI:
 claude mcp add --transport http toshers https://toshers.vercel.app/api/mcp
 ```
 
-You'll get nineteen tools plus five prompts:
+You'll get nineteen tools, five prompts, and four resource families:
 
 - **Catalogue** — `get_index` (accepts `depth: "shallow"` for a ~2kb navigation-only variant, or `"full"` for the 16kb master), `list_chapters`, `get_chapter`, `list_characters`, `get_character` (accepts `profile: "minimal" | "facts" | "full"` to control payload; `"facts"` drops the game_hooks block; includes `mayhew` — a dossier on the narrator himself)
 - **Reader UI** — `get_character_annotated`, `get_chapter_annotated` (return body + span offsets for glossary terms and pre-decimal price references — drop into a reader with popovers for gloss and currency)
@@ -37,6 +41,7 @@ You'll get nineteen tools plus five prompts:
 - **Synthesis** — `list_glossary`, `get_glossary_term`, `list_locations`, `list_relationships`, `get_mentions_of` (reverse graph lookup), `voice_profile` (TTS-ready — `pronunciation_overrides` in IPA, `suggested_voice_model`, `ssml_hints`), `list_quotes` (with `coverage` field — curation is not exhaustive), `list_illustrations`, `list_quiz`, `normalize_price` (four economic bases: CPI, labour value, income value, GDP share; accepts `{pounds, shillings, pence}` or `{literal: "£3 5s 6d"}`)
 - **Citation** — `get_source_lines` (verbatim slice by line range — use for precise quoting without fetching whole dossiers)
 - **Prompts** — `summarise_character_for_kids`, `narrate_character_in_voice`, `find_passages_on`, `map_tour`, `quiz_on`
+- **Resources** — `toshers://chapter/{id}`, `toshers://character/{id}`, `toshers://glossary/{term}`, `toshers://source.txt` (browseable in clients that support resource pickers, e.g. Claude Desktop's `@`-mention)
 
 Every tool description carries a `cost:` tag (cheap/expensive) so agents can budget call patterns. Only `semantic_search` is expensive (live embedding + Neon pgvector query).
 

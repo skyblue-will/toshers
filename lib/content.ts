@@ -131,6 +131,14 @@ export function getCharacter(id: string): FullDocument | null {
   return { meta: c.meta as Record<string, unknown>, body: c.body, raw: c.raw };
 }
 
+export function getSourceRaw(): string {
+  return SOURCE_RAW;
+}
+
+export function getPackageVersion(): string {
+  return PACKAGE_JSON.version ?? "0.0.0";
+}
+
 export function getSourceLines(start: number, end: number): {
   start: number;
   end: number;

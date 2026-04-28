@@ -1,11 +1,14 @@
 import { createMcpHandler } from "mcp-handler";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
   applyProfile,
   getCharacter,
   getChapter,
   getMasterIndex,
+  getPackageVersion,
   getSourceLines,
+  getSourceRaw,
   listChapters,
   listCharacters,
   search,
@@ -491,6 +494,106 @@ const handler = createMcpHandler(
 
     // ---------- Prompts — opinionated starting points for common synthesis tasks ----------
 
+    // ---------- Resources — addressable URIs for chapters, characters, glossary, raw source ----------
+
+    server.resource(
+      "chapter",
+      new ResourceTemplate("toshers://chapter/{id}", {
+        list: async () => ({
+          resources: listChapters().map((c) => ({
+            uri: `toshers://chapter/${c.id}`,
+            name: c.title || c.id,
+            description: c.hook,
+            mimeType: "text/markdown",
+          })),
+        }),
+      }),
+      async (uri, { id }) => {
+        const c = getChapter(String(id));
+        if (!c) {
+          throw new Error(`Chapter not found: ${id}`);
+        }
+        return {
+          contents: [
+            { uri: uri.href, mimeType: "text/markdown", text: c.raw },
+          ],
+        };
+      },
+    );
+
+    server.resource(
+      "character",
+      new ResourceTemplate("toshers://character/{id}", {
+        list: async () => ({
+          resources: listCharacters().map((c) => ({
+            uri: `toshers://character/${c.id}`,
+            name: c.label || c.id,
+            description: c.occupation
+              ? `${c.occupation}${c.age_stated ? `, age ${c.age_stated}` : ""}`
+              : undefined,
+            mimeType: "text/markdown",
+          })),
+        }),
+      }),
+      async (uri, { id }) => {
+        const c = getCharacter(String(id));
+        if (!c) {
+          throw new Error(`Character not found: ${id}`);
+        }
+        return {
+          contents: [
+            { uri: uri.href, mimeType: "text/markdown", text: c.raw },
+          ],
+        };
+      },
+    );
+
+    server.resource(
+      "glossary_term",
+      new ResourceTemplate("toshers://glossary/{term}", {
+        list: async () => ({
+          resources: listGlossary().entries.map((e) => ({
+            uri: `toshers://glossary/${encodeURIComponent(e.term.toLowerCase())}`,
+            name: e.term,
+            description: e.definition,
+            mimeType: "application/json",
+          })),
+        }),
+      }),
+      async (uri, { term }) => {
+        const entry = getGlossaryTerm(decodeURIComponent(String(term)));
+        if (!entry) {
+          throw new Error(`Glossary term not found: ${term}`);
+        }
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: "application/json",
+              text: JSON.stringify(entry, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.resource(
+      "source",
+      "toshers://source.txt",
+      {
+        description:
+          "The full canonical 1851 Mayhew extract, byte-for-byte. ~4,500 lines. Cite as source.txt:start-end.",
+        mimeType: "text/plain",
+      },
+      async (uri: URL) => ({
+        contents: [
+          { uri: uri.href, mimeType: "text/plain", text: getSourceRaw() },
+        ],
+      }),
+    );
+
+    // ---------- Prompts — opinionated starting points for common synthesis tasks ----------
+
     server.prompt(
       "summarise_character_for_kids",
       "Return a kid-safe (age 10+) summary of one character's life and trade, drawing only on their testimony file. No harm details (rat-eating, child death, alcoholism) beyond a gentle mention; keep tone curious and historical.",
@@ -585,7 +688,13 @@ const handler = createMcpHandler(
   {
     serverInfo: {
       name: "toshers",
-      version: "0.1.0",
+      version: getPackageVersion(),
+    },
+    capabilities: {
+      tools: { listChanged: false },
+      prompts: { listChanged: false },
+      resources: { listChanged: false, subscribe: false },
+      logging: {},
     },
   },
   { basePath: "/api" },
