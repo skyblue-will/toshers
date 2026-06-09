@@ -44,6 +44,14 @@ export async function semanticSearch(
   const { embedding } = await embed({ model: MODEL, value: q });
   const literal = `[${embedding.join(",")}]`;
 
+  // The same passage can be indexed under more than one kind (a chapter chunk
+  // can carry the very text the raw source chunk does), and identical text
+  // means identical embeddings, so both would rank side by side. Over-fetch,
+  // then dedupe by chunk text below, keeping the narrower line range (the more
+  // precise citation) and preferring the raw source on a tie. A kind-filtered
+  // query cannot collide, so it fetches exactly `limit`.
+  const fetchLimit = kind ? limit : Math.min(limit * 2 + 5, 50);
+
   const sql = db();
   // Note: neon(...)`...${x}...` uses parameterised queries; we inline ::vector casting.
   const rows = (await sql`
@@ -52,10 +60,30 @@ export async function semanticSearch(
     from chunks
     where (${kind ?? null}::text is null or kind = ${kind ?? null}::text)
     order by embedding <=> ${literal}::vector
-    limit ${limit}
+    limit ${fetchLimit}
   `) as Row[];
 
-  const hits: SemanticHit[] = rows.map((r) => ({
+  const byText = new Map<string, Row>();
+  for (const r of rows) {
+    const prev = byText.get(r.text);
+    if (!prev) {
+      byText.set(r.text, r);
+      continue;
+    }
+    const prevSpan = prev.source_end - prev.source_start;
+    const span = r.source_end - r.source_start;
+    if (
+      span < prevSpan ||
+      (span === prevSpan && r.kind === "source" && prev.kind !== "source")
+    ) {
+      byText.set(r.text, r);
+    }
+  }
+  const deduped = [...byText.values()]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  const hits: SemanticHit[] = deduped.map((r) => ({
     kind: r.kind,
     doc_id: r.doc_id,
     line: r.source_start,

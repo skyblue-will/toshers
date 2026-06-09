@@ -75,6 +75,29 @@ Call `get_index` first when you start a session — it returns the entire catalo
 | `GET /api/search/semantic?q={query}&limit={n}&kind={source|chapter|character}` | **Semantic** search via embeddings (openai/text-embedding-3-small routed through Vercel AI Gateway + pgvector on Neon). Returns ranked hits with line citations and a `score` in 0–1. |
 | `GET /api/source?start={n}&end={m}` | Verbatim line range from `source.txt` (capped 500 lines; `?format=raw` for plain text) |
 
+**A worked example.** One call, one trimmed response:
+
+```bash
+curl 'https://toshers.vercel.app/api/search/semantic?q=children+working+at+night&limit=1'
+```
+
+```json
+{
+  "query": "children working at night",
+  "hits": [
+    {
+      "kind": "source",
+      "source_lines": "2011-2059",
+      "snippet": "The chief part of their gains is, however, by the coals they pick up...",
+      "score": 0.51
+    }
+  ],
+  "model": "openai/text-embedding-3-small"
+}
+```
+
+The `source_lines` field is the citation: feed it to `GET /api/source?start=2011&end=2059` for the verbatim passage.
+
 **CORS:** every `/api/**` route sets `Access-Control-Allow-Origin: *`. Browser apps can fetch the library directly with no proxy.
 
 **Cache invalidation:** `/api/index` returns the current `version` (from `package.json`) and `commit` (Vercel git SHA). Downstream caches can key off these.
